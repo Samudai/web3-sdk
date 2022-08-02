@@ -4,7 +4,7 @@ import {
   Network,
   OwnedNftsResponse,
 } from '@alch/alchemy-sdk'
-import { ErrorResponse } from './utils/types'
+import { ErrorResponse } from '../utils/types'
 
 export class NFTProfile {
   private ethSettings = {
@@ -55,7 +55,7 @@ export class NFTProfile {
     ethUserAddress: string,
     nftLink: string,
     verified: boolean
-  ) => {
+  ): Promise<any> => {
     try {
       console.log('sets profile PPFs')
     } catch (err: any) {
@@ -67,7 +67,7 @@ export class NFTProfile {
     maticUserAddress: string,
     nftLink: string,
     verified: boolean
-  ) => {
+  ): Promise<any> => {
     try {
       console.log('sets profile PPFs')
     } catch (err: any) {
