@@ -1,6 +1,6 @@
 {
   "name": "web3-sdk-samudai",
-  "version": "0.0.2-alpha",
+  "version": "0.0.3-alpha",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -50,10 +50,12 @@
     "@gnosis.pm/safe-core-sdk": "^2.2.1",
     "@gnosis.pm/safe-core-sdk-types": "^1.2.1",
     "@gnosis.pm/safe-ethers-lib": "^1.2.1",
+    "@snapshot-labs/snapshot.js": "^0.4.13",
     "axios": "^0.27.2",
     "crypto-browserify": "^3.12.0",
     "ethers": "^5.6.9",
-    "lit-js-sdk": "^1.1.202"
+    "lit-js-sdk": "^1.1.202",
+    "query-string": "^7.1.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",
