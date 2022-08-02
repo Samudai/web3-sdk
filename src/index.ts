@@ -1,5 +1,5 @@
 export * from './gnosis/src/gnosis'
 export * from './lit-protocol/src/litProtocol'
-export * from './nftProfile/src/nftProfile'
+export * from './NFTProfile/src/nftProfile'
 export * from './snapshot/src/snapshot'
 export * from './siwe/src/siwe'
