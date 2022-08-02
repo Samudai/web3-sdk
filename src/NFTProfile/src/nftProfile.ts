@@ -4,6 +4,7 @@ import {
   Network,
   OwnedNftsResponse,
 } from '@alch/alchemy-sdk'
+import { ErrorResponse } from './utils/types'
 
 export class NFTProfile {
   private ethSettings = {
@@ -22,21 +23,31 @@ export class NFTProfile {
 
   private alchemyPolygon = initializeAlchemy(this.polygonSettings)
 
-  getEthProfilePPs = async (ethUserAddress: string) => {
+  getEthProfilePPs = async (
+    ethUserAddress: string
+  ): Promise<OwnedNftsResponse | ErrorResponse> => {
     try {
       const res = await getNftsForOwner(this.alchemyEth, ethUserAddress)
       return res
     } catch (err: any) {
-      console.log(err)
+      return {
+        message: 'Error while getting NFTs for user',
+        error: `Error: ${err}`,
+      }
     }
   }
 
-  getMaticProfilePPs = async (maticUserAddress: string) => {
+  getMaticProfilePPs = async (
+    maticUserAddress: string
+  ): Promise<OwnedNftsResponse | ErrorResponse> => {
     try {
       const res = await getNftsForOwner(this.alchemyPolygon, maticUserAddress)
       return res
     } catch (err: any) {
-      console.log(err)
+      return {
+        message: 'Error while getting NFTs for user',
+        error: `Error: ${err}`,
+      }
     }
   }
 

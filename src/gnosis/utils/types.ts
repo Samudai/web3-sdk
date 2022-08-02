@@ -20,3 +20,8 @@ export type SafeTransactionTemplate = {
   refundReceiver?: string
   nonce: number
 }
+
+export type ErrorResponse = {
+  message: string
+  error: string
+}

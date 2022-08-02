@@ -1,6 +1,10 @@
 import LitJsSdk from 'lit-js-sdk'
 import { TokenGatingType } from '../utils/enums'
-import { AccessControlConditions, RecourceId } from '../utils/types'
+import {
+  AccessControlConditions,
+  ErrorResponse,
+  RecourceId,
+} from '../utils/types'
 import {
   getERC20TokenGating,
   getERC1155TokenGating,
@@ -25,7 +29,7 @@ export class LitProtocol {
     path: string,
     memberId: string,
     tokenId?: string
-  ): Promise<string | null> => {
+  ): Promise<string | ErrorResponse> => {
     try {
       if (typeOfGating === TokenGatingType.ERC20) {
         this.accessControlConditions = getERC20TokenGating(
@@ -78,25 +82,33 @@ export class LitProtocol {
       return jwt
     } catch (err: any) {
       console.log(err)
-      return null
+      return {
+        message: "Error initializing Lit's protocol",
+        error: `Error: ${err}`,
+      }
     }
   }
 
   verifyLit = async (jwt: string, memberId: string): Promise<boolean> => {
-    if (!jwt) {
-      return false
-    } else {
-      const { verified, payload } = LitJsSdk.verifyJwt({ jwt })
-
-      if (
-        payload.baseUrl !== this.resourceId.baseUrl ||
-        payload.path !== this.resourceId.path ||
-        payload.extraData !== memberId
-      ) {
+    try {
+      if (!jwt) {
         return false
       } else {
-        return true
+        const { verified, payload } = LitJsSdk.verifyJwt({ jwt })
+
+        if (
+          payload.baseUrl !== this.resourceId.baseUrl ||
+          payload.path !== this.resourceId.path ||
+          payload.extraData !== memberId
+        ) {
+          return false
+        } else {
+          return true
+        }
       }
+    } catch (err: any) {
+      console.log(err)
+      return false
     }
   }
 }

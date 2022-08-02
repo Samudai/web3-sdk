@@ -171,7 +171,10 @@ export class Gnosis {
         return null
       }
     } catch (err) {
-      console.log(err)
+      return {
+        message: 'Error while creating Gnosis Transaction',
+        error: `${err}`,
+      }
     }
   }
 }

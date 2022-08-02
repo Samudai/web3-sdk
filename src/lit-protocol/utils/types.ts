@@ -17,3 +17,8 @@ export type RecourceId = {
   role: string
   extraData: string
 }
+
+export type ErrorResponse = {
+  message: string
+  error: string
+}

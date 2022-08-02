@@ -23,25 +23,35 @@ export class Snapshot {
     this.provider = provider
   }
 
-  getSpace = async () => {
+  getSpace = async (): Promise<any> => {
     try {
       const result = await this.queries.getSpace(this.spaceId)
       return result
     } catch (err) {
-      return err
+      return {
+        message: "Error while getting space's details",
+        error: `Error: ${err}`,
+      }
     }
   }
 
-  getActiveProposals = async () => {
+  getActiveProposals = async (): Promise<any> => {
     try {
       const result = await this.queries.getActiveProposals(this.spaceId)
       return result
     } catch (err) {
-      return err
+      return {
+        message: "Error while getting space's details",
+        error: `Error: ${err}`,
+      }
     }
   }
 
-  castVote = async (proposalId: string, choice: number, account: any) => {
+  castVote = async (
+    proposalId: string,
+    choice: number,
+    account: any
+  ): Promise<any> => {
     try {
       const result = await this.queries.getProposal(proposalId)
       if (result) {
@@ -59,7 +69,10 @@ export class Snapshot {
         return voteReceipt
       }
     } catch (err) {
-      return err
+      return {
+        message: "Error while getting space's details",
+        error: `Error: ${err}`,
+      }
     }
   }
 }
