@@ -1,6 +1,6 @@
 {
   "name": "web3-sdk-samudai",
-  "version": "0.0.3-alpha",
+  "version": "0.0.4-alpha",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
