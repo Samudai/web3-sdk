@@ -124,4 +124,49 @@ export class SnapshotQueries {
       return err
     }
   }
+
+  getRecentProposals = async (spaceId: string) => {
+    try {
+      const result = await axios.post(`${this.url}`, null, {
+        params: {
+          operationName: 'Proposals',
+          query: `query Proposals {
+                proposals (
+                  first: 20,
+                  skip: 0,
+                  where: {
+                    space_in: ["${spaceId}"],
+                  },
+                  orderBy: "created",
+                  orderDirection: desc
+                ) {
+                    id
+                    type
+                    title
+                    body
+                    choices
+                    start
+                    end
+                    snapshot
+                    state
+                    choices
+                    start
+                    end
+                    scores
+                    scores_by_strategy
+                    scores_total
+                    author
+                  space {
+                    id
+                    name
+                  }
+                }
+              }`,
+        },
+      })
+      return result.data
+    } catch (err) {
+      return err
+    }
+  }
 }

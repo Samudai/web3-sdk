@@ -5,7 +5,12 @@ import { SafeSignature } from '@gnosis.pm/safe-core-sdk-types'
 import EthersAdapter from '@gnosis.pm/safe-ethers-lib'
 import axios from 'axios'
 import { ethers } from 'ethers'
-import { SafeTransactionTemplate } from '../utils/types'
+import {
+  ErrorResponse,
+  MultisigTransactionResponse,
+  SafeTransactionResponse,
+  SafeTransactionTemplate,
+} from '../utils/types'
 
 export class Gnosis {
   private safeAddress = ''
@@ -60,7 +65,13 @@ export class Gnosis {
     try {
       const result = await axios.post(
         `https://safe-relay.rinkeby.gnosis.io/api/v2/safes/${this.safeAddress}/transactions/estimate/`,
-        baseTx
+        {
+          to: baseTx.to,
+          value: baseTx.value,
+          data: baseTx.data,
+          operation: baseTx.operation,
+          gasToken: baseTx.gasToken,
+        }
       )
       return result.data
     } catch (err) {
@@ -112,9 +123,9 @@ export class Gnosis {
     safeAddress: string,
     receiverAddress: string,
     paymentValueInWei: string
-  ): Promise<any> => {
+  ): Promise<SafeTransactionResponse | ErrorResponse> => {
     try {
-      this, (safeAddress = safeAddress)
+      this.safeAddress = safeAddress
 
       if (this.provider) {
         const safeOwner = await this.provider.getSigner(0)
@@ -143,7 +154,6 @@ export class Gnosis {
         //Step 1: Estimate SafeTx
 
         const estimatedSafeTx = await this.estimateSafeTx(safeTx)
-        console.log(estimatedSafeTx)
 
         safeTx.safeTxGas = estimatedSafeTx.safeTxGas
         safeTx.nonce =
@@ -153,7 +163,6 @@ export class Gnosis {
 
         //Step 2: get safetx hash
         const safeTxHash = this.getTransactionHash(this.chainId, safeTx)
-        console.log(safeTxHash)
 
         //Step 3: sign safeTxHash
         const signature = await safeSdk.signTransactionHash(safeTxHash)
@@ -165,14 +174,73 @@ export class Gnosis {
           signature
         )
 
-        console.log(proposedSafeTx)
-        return proposedSafeTx
+        const data: SafeTransactionResponse = {
+          safeTxHash: safeTxHash,
+          proposedSafeTx: proposedSafeTx,
+        }
+
+        return data
       } else {
-        return null
+        return {
+          message: 'Something went wrong while creating Gnosis Transaction',
+          error: 'Provider is null',
+        }
       }
     } catch (err) {
       return {
         message: 'Error while creating Gnosis Transaction',
+        error: `${err}`,
+      }
+    }
+  }
+
+  getPendingTransactions = async (
+    safeAddress: string
+  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+    try {
+      const res = await axios.get(
+        `https://safe-transaction.rinkeby.gnosis.io/api/v1/safes/${safeAddress}/multisig-transactions/?executed=false`
+      )
+
+      return res.data
+    } catch (err) {
+      return {
+        message: 'Error while fetching pending transactions',
+        error: `${err}`,
+      }
+    }
+  }
+
+  getExecutedTransactions = async (
+    safeAddress: string
+  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+    try {
+      const res = await axios.get(
+        `https://safe-transaction.rinkeby.gnosis.io/api/v1/safes/${safeAddress}/multisig-transactions/?executed=true`
+      )
+
+      return res.data
+    } catch (err) {
+      return {
+        message: 'Error while fetching pending transactions',
+        error: `${err}`,
+      }
+    }
+  }
+
+  getTransactionDetails = async (
+    safeTxHash: string
+  ): Promise<MultisigTransactionResponse | ErrorResponse> => {
+    try {
+      const res = await axios.get(
+        `https://safe-transaction.rinkeby.gnosis.io/api/v1/multisig-transactions/${safeTxHash}/
+        `
+      )
+
+      return res.data
+    } catch (err) {
+      return {
+        message: 'Error while fetching pending transactions',
         error: `${err}`,
       }
     }

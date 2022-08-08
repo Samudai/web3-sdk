@@ -47,6 +47,18 @@ export class Snapshot {
     }
   }
 
+  getRecentProposals = async (): Promise<any> => {
+    try {
+      const result = await this.queries.getRecentProposals(this.spaceId)
+      return result
+    } catch (err) {
+      return {
+        message: "Error while getting space's details",
+        error: `Error: ${err}`,
+      }
+    }
+  }
+
   castVote = async (
     proposalId: string,
     choice: number,
