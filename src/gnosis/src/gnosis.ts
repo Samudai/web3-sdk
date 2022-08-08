@@ -9,6 +9,7 @@ import {
   ErrorResponse,
   MultisigTransactionResponse,
   SafeTransactionResponse,
+  SafeTransactions,
   SafeTransactionTemplate,
 } from '../utils/types'
 
@@ -119,6 +120,13 @@ export class Gnosis {
     return safeTxHash
   }
 
+  /**
+   * Function to create gnosis transaction
+   * @param safeAddress string - The address of the Gnosis Safe
+   * @param receiverAddress string - The address of the receiver
+   * @param paymentValueInWei string - The amount of payment in Wei
+   * @returns SafeTransactionResponse - The response from the Gnosis Safe
+   */
   gnosisInit = async (
     safeAddress: string,
     receiverAddress: string,
@@ -194,9 +202,14 @@ export class Gnosis {
     }
   }
 
+  /**
+   * Function that returns all pending transactions
+   * @param safeAddress string - The address of the Gnosis Safe
+   * @returns SafeTransactions - The response from the Gnosis Safe
+   */
   getPendingTransactions = async (
     safeAddress: string
-  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+  ): Promise<SafeTransactions | ErrorResponse> => {
     try {
       const res = await axios.get(
         `https://safe-transaction.rinkeby.gnosis.io/api/v1/safes/${safeAddress}/multisig-transactions/?executed=false`
@@ -211,9 +224,14 @@ export class Gnosis {
     }
   }
 
+  /**
+   * Function to return all safe transactions executed
+   * @param safeAddress string - The address of the Gnosis Safe
+   * @returns SafeTransactions - The response from the Gnosis Safe
+   */
   getExecutedTransactions = async (
     safeAddress: string
-  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+  ): Promise<SafeTransactions | ErrorResponse> => {
     try {
       const res = await axios.get(
         `https://safe-transaction.rinkeby.gnosis.io/api/v1/safes/${safeAddress}/multisig-transactions/?executed=true`
@@ -228,6 +246,11 @@ export class Gnosis {
     }
   }
 
+  /**
+   * Function to return Details for single transaction
+   * @param safeTxHash string - The hash of the transaction
+   * @returns MultiSigTransactionResponse - The response from the Gnosis Safe
+   */
   getTransactionDetails = async (
     safeTxHash: string
   ): Promise<MultisigTransactionResponse | ErrorResponse> => {
