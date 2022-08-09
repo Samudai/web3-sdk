@@ -1,5 +1,5 @@
 {
-  "name": "samudai-sdk-v1",
+  "name": "@samudai_xyz/web3-sdk",
   "version": "0.0.8-alpha",
   "description": "",
   "main": "dist/cjs/index.js",
