@@ -1,46 +1,42 @@
 # web3-sdk-samudai
+
 ## All in one web3 integrations for Samudai
 
 ## Current Integrations on SDK
 
 SDK currently has the following for the web3 integrations
 
-- Gnosis  - Gnosis for onchain payments
-- Lit Protocol - For token gating 
+- Gnosis - Gnosis for onchain payments
+- Lit Protocol - For token gating
 - NFT-PPFs - Fetching of NFT profile photos for users
 - SIWE - Sign in with ethereum
 - Snapshot - Snapshot for proposals
-
 
 ## Installation
 
 Dillinger requires [Node.js](https://nodejs.org/).
 
-
 ```sh
 npm i web3-sdk-samudai
 ```
-
-
 
 ## Usage
 
 The SDK has the following components and the below table provides an overview to initialize them.
 
-| Plugin | README |
-| ------ | ------ |
-| Gnosis | ```const gnosis = new Gnosis(provider: Web3Provider, chaindId: number)``` |
-| Lit Protocol | ```const litProtocol = new LitProtocol()``` |
-| NFT PPFs | ```const nftPPfs = new NFTProfile()``` |
-| SIWE | ```const siwe = new Siwe(provider: Web3Provider)``` |
-| Snapshot | ```const snapshot = new Snapshot(spaceId: string, networkType: number, provider: Web3Provider)``` |
+| Plugin       | README                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| Gnosis       | `const gnosis = new Gnosis(provider: Web3Provider, chaindId: number)`                         |
+| Lit Protocol | `const litProtocol = new LitProtocol()`                                                       |
+| NFT PPFs     | `const nftPPfs = new NFTProfile()`                                                            |
+| SIWE         | `const siwe = new Siwe(provider: Web3Provider)`                                               |
+| Snapshot     | `const snapshot = new Snapshot(spaceId: string, networkType: number, provider: Web3Provider)` |
 
 ## Gnosis APIs
 
 Gnosis APis are used to create transactions on the multisig and fetch transactions.
 
-To use Gnosis 
-
+To use Gnosis
 
 ### Initialize gnosis:
 
@@ -48,67 +44,130 @@ To use Gnosis
 const gnosis = new Gnosis(provider: Web3Provider, chaindId: number)
 ```
 
-
-### To create a gnosis transaction 
+### To create a gnosis transaction
 
 ```sh
 const result = await gnosis.gnosisInit(safeAddress: string, receiverAddress: string, paymentValueInWei: string)
 ```
+
 > Param 1: `safeAddress` Gnosis safe address.
 > Param 2: `receiverAddress` Wallet address of the user whom the funds is being sent.
 > Param 3: `safeAddress` ETH value in wei.
 
-Example 
+Example
+
 ```sh
 const result = await gnosis.gnosisInit("0xE666431e8Ba10B17D296aB16A4FF8d9A552eb488", "0xB1BFB38a527D05442D48068ca9798FD3E5d6ce0F", "100000000")
 ```
 
-### To get pending transactions for a safe 
+### To get pending transactions for a safe
 
 ```sh
 const result = await gnosis.getPendingTransactions(safeAddress: string)
 ```
+
 > Param 1: `safeAddress` Gnosis safe address.
 
+Example
 
-Example 
 ```sh
 const result = await gnosis.getPendingTransactions("0xE666431e8Ba10B17D296aB16A4FF8d9A552eb488")
 ```
 
-### To get past / executed transactions for a safe 
+### To get past / executed transactions for a safe
 
 ```sh
 const result = await gnosis.getExecutedTransactions(safeAddress: string)
 ```
+
 > Param 1: `safeAddress` Gnosis safe address.
 
+Example
 
-Example 
 ```sh
 const result = await gnosis.getExecutedTransactions("0xE666431e8Ba10B17D296aB16A4FF8d9A552eb488")
 ```
+
 ### To get transactions details, status of a transactions for a safe transaction hash
 
 ```sh
 const result = await gnosis.getTransactionDetails(safeTxHash: string)
 ```
+
 > Param 1: `safeTxHash` Transaction hash of a particular safe transaction.
 
+Example
 
-Example 
 ```sh
 const result = await gnosis.getTransactionDetails("0x4a429ae97dd5bac92e9eef8e28fba94cf8813474c485228e58d81f04c332c399")
 ```
 
+### To connect a gnosis safe
+
+```sh
+const result = await gnosis.connectGnosis(userAddress: string)
+```
+
+> Param 1: `userAddress` User address
+
+This will return the safes for which user is an owner and also list of all other owners for a safe
+
+Example
+
+```sh
+const result = await gnosis.gnosisConnect("0x4a429ae97dd5bac92e9eef8e28fba94cf8813474c485228e58d81f04c332c399")
+```
+
+### To add a gnosis safe
+
+After user selects a safe, we can add it to the DAO by calling the following
+
+```sh
+const result = await gnosis.addProvider(provider: Provider)
+```
+
+> Param 1: `provider`
+
+The type Provider has following fields
+
+```sh
+Provider = {
+  id: string
+  dao_id: string
+  provider_type: ProviderType
+  address: string
+  chain_id: string
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+enum ProviderType = {
+    'WALLET' = 'WALLET',
+  'GNOSIS' = 'GNOSIS',
+}
+```
+
+Example
+
+```sh
+const provider: Provider = {
+    dao_id: "DaoID",
+    provider_type: ProviderType.GNOSIS
+    address: "safeAddress",
+    chain_id: 1,
+    created_by: "user uuid"
+
+}
+
+const result = await gnosis.addProvider(provider)
+```
 
 ---
-
 
 ## NFT Profile APIs
 
 NFT Profile APIs are used to fetch the NFTs owned by the user on ETH and Polygon which can later be set as profile photos
-
 
 ### Initialize NFT Profile Photos:
 
@@ -116,15 +175,16 @@ NFT Profile APIs are used to fetch the NFTs owned by the user on ETH and Polygon
 const nftProfile = new NFTProfile()
 ```
 
-
 ### To get ETH based NFTs
 
 ```sh
 const ethNFTs = await nftProfile.getEthProfilePPs(ethUserAddress: string)
 ```
+
 > Param 1: `ethUserAddress` Wallet Address of the user.
 
-Example 
+Example
+
 ```sh
 const ethNFTs = await nftProfile.getEthProfilePPs(0xB1BFB38a527D05442D48068ca9798FD3E5d6ce0F)
 ```
@@ -134,8 +194,8 @@ const ethNFTs = await nftProfile.getEthProfilePPs(0xB1BFB38a527D05442D48068ca979
 ```sh
 const polygonNFTs = await nftProfile.getMaticProfilePPs(maticUserAddress: string)
 ```
-> Param 1: `maticUserAddress` Wallet Address of the user.
 
+> Param 1: `maticUserAddress` Wallet Address of the user.
 
 ---
 
@@ -143,14 +203,13 @@ const polygonNFTs = await nftProfile.getMaticProfilePPs(maticUserAddress: string
 
 Lit Protocol APIs are used to for token gating
 
-To use Lit Protocol 
+To use Lit Protocol
 
 ### Initialize Lit Protocol:
 
 ```sh
 const litProtocol = new LitProtocol()
 ```
-
 
 ### To create a Lit protocol gating
 
@@ -165,6 +224,7 @@ const tokenGating = await litProtocol.init(
     tokenId?: string
 )
 ```
+
 > Param 1: `chain` The chain on which the Token Gating will be created. Refer the list of chains below the example.
 > Param 2: `contractAddress` Contract Address of the Token.
 > Param 3: `typeOfGating` Enum value of which type of Gating. Refer the enum list below the example.
@@ -175,9 +235,8 @@ const tokenGating = await litProtocol.init(
 
 > Returns: `jwt` JWT token can be set on cookies or anything on the frontend and needs to be sent to SDK for verification
 
+Example
 
-
-Example 
 ```sh
 const tokenGating = await litProtocol.init(
     chain: "rinkeby",
@@ -189,19 +248,19 @@ const tokenGating = await litProtocol.init(
 )
 ```
 
-List of chains 
-| chain | 
-| ------ | 
+List of chains
+| chain |
+| ------ |
 | ethereum |
-| rinkeby | 
-| polygon | 
+| rinkeby |
+| polygon |
 | goerli |
-| mumbai | 
+| mumbai |
 
-For further chain supports based on EVM use the following list 
+For further chain supports based on EVM use the following list
 https://developer.litprotocol.com/supportedChains
 
-Enum for TokenGatingType 
+Enum for TokenGatingType
 
 ```sh
 enum TokenGatingType = {
@@ -215,21 +274,18 @@ ERC721 = 1
 ERC1155 = 2
 ```
 
-
-### To verify the user 
+### To verify the user
 
 ```sh
 const result = await litProtocol.verifyLit(jwt: string, memberId: string)
 ```
+
 > Param 1: `jwt` JWT generated by the init functionality.
 > Param 2: `memberId` Member UUID
 
 > Returns: verifyLit returns true / false based on the access conditions
 
-
-
-
-----
+---
 
 ## SIWE
 
@@ -243,16 +299,16 @@ To use SIWE
 const siwe = new Siwe(provider: Web3Provider)
 ```
 
-
 ### To sign in user, you need to ask the user to sign a message and push the users to required screen after successful signing
 
 ```sh
 const result = siwe.walletSignIn(domain: string)
 ```
+
 > Param 1: `domain` URL of the frontend
 
+Example
 
-Example 
 ```
 const result = siwe.walletSignIn("https://samudai.xyz")
 ```
@@ -270,15 +326,16 @@ To use snapshot
 ```sh
 const snapshot = new Snapshot(spaceId: string, networkType: number, provider: Web3Provider)
 ```
+
 > Param 1: `spaceId` Space ID in Snapshot
 > Param 2: `networkType` 0 for Ethereum, 1 for testnets
 > Param 3: `provider` Web3Provider
 
-Example 
+Example
+
 ```
 const snapshot = new Snapshot("biryani.eth", 1, provider)
 ```
-
 
 ### To get information about a Space
 
@@ -303,4 +360,3 @@ const result = snapshot.getRecentProposals()
 ```sh
 const result = snapshot.castVote(proposalId: string, choice: number,account: any)
 ```
-

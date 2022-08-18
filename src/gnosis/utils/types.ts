@@ -1,5 +1,10 @@
 import { Web3Provider } from '@ethersproject/providers'
 
+export enum ProviderType {
+  'WALLET' = 'WALLET',
+  'GNOSIS' = 'GNOSIS',
+}
+
 export type GnosisTx = {
   safeAddress: string
   provider: Web3Provider
@@ -79,4 +84,20 @@ export type MultisigConfirmations = {
   transactionHash: string
   signature: string
   signatureType: string
+}
+
+export type Provider = {
+  id: string
+  dao_id: string
+  provider_type: ProviderType
+  address: string
+  chain_id: string
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type UserSafe = {
+  safeAddress: string
+  owners: string[] | null
 }

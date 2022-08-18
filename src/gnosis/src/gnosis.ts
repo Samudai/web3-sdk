@@ -1,16 +1,18 @@
 import { AddressZero } from '@ethersproject/constants'
-import { Web3Provider } from '@ethersproject/providers'
-import Safe from '@gnosis.pm/safe-core-sdk'
+import { Provider, Web3Provider } from '@ethersproject/providers'
+import Safe, { ContractNetworksConfig } from '@gnosis.pm/safe-core-sdk'
 import { SafeSignature } from '@gnosis.pm/safe-core-sdk-types'
 import EthersAdapter from '@gnosis.pm/safe-ethers-lib'
 import axios from 'axios'
 import { ethers } from 'ethers'
+import { Networks } from '../utils/networks'
 import {
   ErrorResponse,
   MultisigTransactionResponse,
   SafeTransactionResponse,
   SafeTransactions,
   SafeTransactionTemplate,
+  UserSafe,
 } from '../utils/types'
 
 export class Gnosis {
@@ -32,6 +34,8 @@ export class Gnosis {
       { type: 'uint256', name: 'nonce' },
     ],
   }
+  private SAFE_URL = ''
+  private SAFE_RELAY_URL = ''
 
   /**
    *
@@ -41,6 +45,12 @@ export class Gnosis {
   constructor(provider: Web3Provider, chainId: number) {
     this.provider = provider
     this.chainId = chainId
+    Networks.map((network) => {
+      if (network.chainId === chainId) {
+        this.SAFE_URL = network.url
+        this.SAFE_RELAY_URL = network.relayUrl
+      }
+    })
   }
 
   private buildSafeTx = (template: SafeTransactionTemplate) => {
@@ -65,7 +75,7 @@ export class Gnosis {
   private estimateSafeTx = async (baseTx: any) => {
     try {
       const result = await axios.post(
-        `https://safe-relay.rinkeby.gnosis.io/api/v2/safes/${this.safeAddress}/transactions/estimate/`,
+        `${this.SAFE_RELAY_URL}/api/v2/safes/${this.safeAddress}/transactions/estimate/`,
         {
           to: baseTx.to,
           value: baseTx.value,
@@ -93,7 +103,7 @@ export class Gnosis {
         signature: signature.data,
       }
       const res = await axios.post(
-        `https://safe-transaction.rinkeby.gnosis.io/api/v1/safes/${this.safeAddress}/multisig-transactions/`,
+        `${this.SAFE_URL}/api/v1/safes/${this.safeAddress}/multisig-transactions/`,
         data
       )
       return res.data
@@ -127,7 +137,7 @@ export class Gnosis {
    * @param paymentValueInWei string - The amount of payment in Wei
    * @returns SafeTransactionResponse - The response from the Gnosis Safe
    */
-  gnosisInit = async (
+  makeGnosisTransaction = async (
     safeAddress: string,
     receiverAddress: string,
     paymentValueInWei: string
@@ -212,7 +222,7 @@ export class Gnosis {
   ): Promise<SafeTransactions | ErrorResponse> => {
     try {
       const res = await axios.get(
-        `https://safe-transaction.rinkeby.gnosis.io/api/v1/safes/${safeAddress}/multisig-transactions/?executed=false`
+        `${this.SAFE_URL}/api/v1/safes/${safeAddress}/multisig-transactions/?executed=false`
       )
 
       return res.data
@@ -234,7 +244,7 @@ export class Gnosis {
   ): Promise<SafeTransactions | ErrorResponse> => {
     try {
       const res = await axios.get(
-        `https://safe-transaction.rinkeby.gnosis.io/api/v1/safes/${safeAddress}/multisig-transactions/?executed=true`
+        `${this.SAFE_URL}/api/v1/safes/${safeAddress}/multisig-transactions/?executed=true`
       )
 
       return res.data
@@ -256,14 +266,80 @@ export class Gnosis {
   ): Promise<MultisigTransactionResponse | ErrorResponse> => {
     try {
       const res = await axios.get(
-        `https://safe-transaction.rinkeby.gnosis.io/api/v1/multisig-transactions/${safeTxHash}/
-        `
+        `${this.SAFE_URL}/api/v1/multisig-transactions/${safeTxHash}/`
       )
 
       return res.data
     } catch (err) {
       return {
         message: 'Error while fetching pending transactions',
+        error: `${err}`,
+      }
+    }
+  }
+
+  getSafeOwners = async (safeAddress: string): Promise<string[] | null> => {
+    try {
+      const owners: string[] = []
+      const result = await axios.get(
+        `${this.SAFE_URL}/api/v1/safes/${safeAddress}/`
+      )
+      const safeOwners = result.data.owners
+
+      for (const owner of owners) {
+        const address = (await this.provider?.lookupAddress(owner)) || owner
+        owners.push(address)
+      }
+
+      return owners
+    } catch (err) {
+      return null
+    }
+  }
+  //create provider
+
+  // addProvider = async (provider: Provider) => {
+
+  // }
+
+  connectGnosis = async (
+    userAddress: string
+  ): Promise<UserSafe[] | ErrorResponse> => {
+    try {
+      const UserSafes: UserSafe[] = []
+      const result = await axios.get(
+        `${this.SAFE_URL}/api/v1/owners/${userAddress}/safes/`
+      )
+      const userSafes: string[] = result.data.safes
+      for (const userSafe of userSafes) {
+        const owners = await this.getSafeOwners(userSafe)
+        UserSafes.push({
+          safeAddress: userSafe,
+          owners: owners,
+        })
+      }
+
+      return UserSafes
+    } catch (err) {
+      return {
+        message: 'Error while fetching Safes For user',
+        error: `${err}`,
+      }
+    }
+  }
+
+  addProvider = async (provider: Provider) => {
+    try {
+      const result = await axios.post(
+        'http://localhost:3002/api/provider/create',
+        {
+          provider: provider,
+        }
+      )
+      return result.data
+    } catch (err) {
+      return {
+        message: 'Error while adding provider',
         error: `${err}`,
       }
     }
