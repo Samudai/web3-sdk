@@ -1,200 +1,119 @@
-import { AddressZero } from '@ethersproject/constants'
+import { ethers } from 'ethers'
 import { Provider, Web3Provider } from '@ethersproject/providers'
-import Safe, { ContractNetworksConfig } from '@gnosis.pm/safe-core-sdk'
-import { SafeSignature } from '@gnosis.pm/safe-core-sdk-types'
+import Safe, { SafeTransactionOptionalProps } from '@gnosis.pm/safe-core-sdk'
 import EthersAdapter from '@gnosis.pm/safe-ethers-lib'
 import axios from 'axios'
-import { ethers } from 'ethers'
 import { Networks } from '../utils/networks'
 import {
+  MetaTransactionData,
+  SafeTransactionDataPartial,
+} from '@gnosis.pm/safe-core-sdk-types'
+import SafeServiceClient, {
+  SafeMultisigTransactionListResponse,
+  SafeMultisigTransactionResponse,
+} from '@gnosis.pm/safe-service-client'
+import {
   ErrorResponse,
-  MultisigTransactionResponse,
   SafeTransactionResponse,
   SafeTransactions,
-  SafeTransactionTemplate,
   UserSafe,
 } from '../utils/types'
 
 export class Gnosis {
   private safeAddress = ''
   private provider: Web3Provider | null = null
-  private chainId = 0
+  private chainId: number
   private etherAdapter: EthersAdapter | null = null
-  private EIP712_SAFE_TX_TYPE = {
-    SafeTx: [
-      { type: 'address', name: 'to' },
-      { type: 'uint256', name: 'value' },
-      { type: 'bytes', name: 'data' },
-      { type: 'uint8', name: 'operation' },
-      { type: 'uint256', name: 'safeTxGas' },
-      { type: 'uint256', name: 'baseGas' },
-      { type: 'uint256', name: 'gasPrice' },
-      { type: 'address', name: 'gasToken' },
-      { type: 'address', name: 'refundReceiver' },
-      { type: 'uint256', name: 'nonce' },
-    ],
-  }
-  private SAFE_URL = ''
-  private SAFE_RELAY_URL = ''
 
-  /**
-   *
-   * @param provider Web3Provider - The provider to use for interacting with the Gnosis Safe
-   * @param chainId number - The chain ID of the Wallet
-   */
+  private txServiceUrl = ''
+
+  //Constructor
+
   constructor(provider: Web3Provider, chainId: number) {
     this.provider = provider
     this.chainId = chainId
-    Networks.map((network) => {
+    Networks.forEach((network) => {
       if (network.chainId === chainId) {
-        this.SAFE_URL = network.url
-        this.SAFE_RELAY_URL = network.relayUrl
+        this.txServiceUrl = network.url
       }
     })
   }
 
-  private buildSafeTx = (template: SafeTransactionTemplate) => {
-    return {
-      to: template.to,
-      value: template.value || 0,
-      data: template.data || '0x',
-      operation: template.operation || 0,
-      safeTxGas: template.safeTxGas || 0,
-      baseGas: template.baseGas || 0,
-      gasPrice: template.gasPrice || 0,
-      gasToken: template.gasToken || AddressZero,
-      refundReceiver: template.refundReceiver || AddressZero,
-      nonce: template.nonce,
-    }
+  private generateBatchTransaction = (
+    value: string,
+    receiverAddresses: string[]
+  ): MetaTransactionData[] => {
+    const transactions: MetaTransactionData[] = []
+
+    const receiverValue: number = parseInt(value) / receiverAddresses.length
+
+    receiverAddresses.map((receiverAddress) => {
+      transactions.push({
+        to: receiverAddress,
+        value: receiverValue.toString(),
+        data: '0x',
+        operation: 0,
+      })
+    })
+
+    return transactions
   }
 
-  /**
-   *
-   * @param baseTx SafeTransactionTemplate - The base transaction template to use for the signature
-   */
-  private estimateSafeTx = async (baseTx: any) => {
-    try {
-      const result = await axios.post(
-        `${this.SAFE_RELAY_URL}/api/v2/safes/${this.safeAddress}/transactions/estimate/`,
-        {
-          to: baseTx.to,
-          value: baseTx.value,
-          data: baseTx.data,
-          operation: baseTx.operation,
-          gasToken: baseTx.gasToken,
-        }
-      )
-      return result.data
-    } catch (err) {
-      console.log(err)
-    }
-  }
-
-  private proposeTx = async (
-    safeTx: any,
-    safeTxHash: string,
-    signature: SafeSignature
-  ) => {
-    try {
-      const data = {
-        ...safeTx,
-        contractTransactionHash: safeTxHash,
-        sender: signature.signer,
-        signature: signature.data,
-      }
-      const res = await axios.post(
-        `${this.SAFE_URL}/api/v1/safes/${this.safeAddress}/multisig-transactions/`,
-        data
-      )
-      return res.data
-    } catch (e) {
-      console.log(e)
-    }
-  }
-
-  /**
-   *
-   * @param chainId number - The chain ID of the Wallet
-   * @param safeTx any - The SafeTransactionTemplate to use for the signature
-   * @returns string - The transaction hash of the proposed transaction
-   */
-  private getTransactionHash = (chainId: number, safeTx: any): string => {
-    const safeTxHash = ethers.utils._TypedDataEncoder.hash(
-      {
-        chainId: chainId,
-        verifyingContract: this.safeAddress,
-      },
-      this.EIP712_SAFE_TX_TYPE,
-      safeTx
-    )
-    return safeTxHash
-  }
-
-  /**
-   * Function to create gnosis transaction
-   * @param safeAddress string - The address of the Gnosis Safe
-   * @param receiverAddress string - The address of the receiver
-   * @param paymentValueInWei string - The amount of payment in Wei
-   * @returns SafeTransactionResponse - The response from the Gnosis Safe
-   */
-  makeGnosisTransaction = async (
-    safeAddress: string,
+  createSingleGnosisTx = async (
     receiverAddress: string,
-    paymentValueInWei: string
+    value: string,
+    safeAddress: string,
+    senderAddress: string
   ): Promise<SafeTransactionResponse | ErrorResponse> => {
     try {
-      this.safeAddress = safeAddress
+      this.safeAddress = ethers.utils.getAddress(safeAddress)
 
       if (this.provider) {
         const safeOwner = await this.provider.getSigner(0)
 
-        //Create Ethers Adapter
-
         this.etherAdapter = new EthersAdapter({
-          ethers,
+          ethers: ethers,
           signer: safeOwner,
         })
 
-        const safeSdk: Safe = await Safe.create({
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const safeSDK = await Safe.create({
           ethAdapter: this.etherAdapter,
           safeAddress: this.safeAddress,
         })
 
-        const safeTx = this.buildSafeTx({
+        const nonce = await safeService.getNextNonce(this.safeAddress)
+
+        const transaction: SafeTransactionDataPartial = {
           to: ethers.utils.getAddress(receiverAddress),
-          value: paymentValueInWei,
           data: '0x',
+          value: value,
           operation: 0,
-          safeTxGas: 0,
-          nonce: 0,
-        })
+          nonce: nonce,
+        }
 
-        //Step 1: Estimate SafeTx
+        const safeTransaction = await safeSDK.createTransaction(transaction)
 
-        const estimatedSafeTx = await this.estimateSafeTx(safeTx)
+        const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
-        safeTx.safeTxGas = estimatedSafeTx.safeTxGas
-        safeTx.nonce =
-          estimatedSafeTx.lastUsedNonce === null
-            ? 0
-            : estimatedSafeTx.lastUsedNonce + 1
+        const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
 
-        //Step 2: get safetx hash
-        const safeTxHash = this.getTransactionHash(this.chainId, safeTx)
-
-        //Step 3: sign safeTxHash
-        const signature = await safeSdk.signTransactionHash(safeTxHash)
-
-        //Step 4: propose safeTx
-        const proposedSafeTx = await this.proposeTx(
-          safeTx,
+        const result = await safeService.proposeTransaction({
+          safeAddress: this.safeAddress,
+          safeTransactionData: safeTransaction.data,
           safeTxHash,
-          signature
-        )
+          senderAddress: ethers.utils.getAddress(senderAddress),
+          senderSignature: senderSignature.data,
+          origin: 'Samudai Platform',
+        })
 
         const data: SafeTransactionResponse = {
           safeTxHash: safeTxHash,
-          proposedSafeTx: proposedSafeTx,
+          proposedSafeTx: result,
         }
 
         return data
@@ -204,7 +123,7 @@ export class Gnosis {
           error: 'Provider is null',
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       return {
         message: 'Error while creating Gnosis Transaction',
         error: `${err}`,
@@ -212,23 +131,112 @@ export class Gnosis {
     }
   }
 
-  /**
-   * Function that returns all pending transactions
-   * @param safeAddress string - The address of the Gnosis Safe
-   * @returns SafeTransactions - The response from the Gnosis Safe
-   */
+  createBatchGnosisTx = async (
+    safeAddress: string,
+    receiverAddresses: string[],
+    value: string,
+    senderAddress: string
+  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+    try {
+      this.safeAddress = ethers.utils.getAddress(safeAddress)
+
+      if (this.provider) {
+        const safeOwner = await this.provider.getSigner(0)
+
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signer: safeOwner,
+        })
+
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const safeSDK = await Safe.create({
+          ethAdapter: this.etherAdapter,
+          safeAddress: this.safeAddress,
+        })
+
+        const nonce = await safeService.getNextNonce(this.safeAddress)
+
+        const transactions: MetaTransactionData[] =
+          this.generateBatchTransaction(value, receiverAddresses)
+
+        const options: SafeTransactionOptionalProps = {
+          nonce, // Optional
+        }
+
+        const safeTransaction = await safeSDK.createTransaction(
+          transactions,
+          options
+        )
+
+        const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
+
+        const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
+
+        const result = await safeService.proposeTransaction({
+          safeAddress: this.safeAddress,
+          safeTransactionData: safeTransaction.data,
+          safeTxHash,
+          senderAddress: ethers.utils.getAddress(senderAddress),
+          senderSignature: senderSignature.data,
+          origin: 'Samudai Platform',
+        })
+
+        const data: SafeTransactionResponse = {
+          safeTxHash: safeTxHash,
+          proposedSafeTx: result,
+        }
+
+        return data
+      } else {
+        return {
+          message: 'Something went wrong while creating Gnosis Transaction',
+          error: 'Provider is null',
+        }
+      }
+    } catch (err: any) {
+      return {
+        message: 'Error while creating Gnosis Transaction',
+        error: `${err}`,
+      }
+    }
+  }
+
   getPendingTransactions = async (
     safeAddress: string
-  ): Promise<SafeTransactions | ErrorResponse> => {
+  ): Promise<SafeMultisigTransactionListResponse | ErrorResponse> => {
     try {
-      const res = await axios.get(
-        `${this.SAFE_URL}/api/v1/safes/${safeAddress}/multisig-transactions/?executed=false`
-      )
+      if (this.provider) {
+        const safeOwner = await this.provider.getSigner(0)
 
-      return res.data
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signer: safeOwner,
+        })
+
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const pendingTxs: SafeMultisigTransactionListResponse =
+          await safeService.getPendingTransactions(
+            ethers.utils.getAddress(safeAddress)
+          )
+
+        return pendingTxs
+      } else {
+        return {
+          message: 'Something went wrong while getting pending transactions',
+          error: 'Provider is null',
+        }
+      }
     } catch (err) {
       return {
-        message: 'Error while fetching pending transactions',
+        message: 'Something went wrong while getting pending transactions',
         error: `${err}`,
       }
     }
@@ -244,7 +252,7 @@ export class Gnosis {
   ): Promise<SafeTransactions | ErrorResponse> => {
     try {
       const res = await axios.get(
-        `${this.SAFE_URL}/api/v1/safes/${safeAddress}/multisig-transactions/?executed=true`
+        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/multisig-transactions/?executed=true`
       )
 
       return res.data
@@ -256,23 +264,36 @@ export class Gnosis {
     }
   }
 
-  /**
-   * Function to return Details for single transaction
-   * @param safeTxHash string - The hash of the transaction
-   * @returns MultiSigTransactionResponse - The response from the Gnosis Safe
-   */
   getTransactionDetails = async (
     safeTxHash: string
-  ): Promise<MultisigTransactionResponse | ErrorResponse> => {
+  ): Promise<SafeMultisigTransactionResponse | ErrorResponse> => {
     try {
-      const res = await axios.get(
-        `${this.SAFE_URL}/api/v1/multisig-transactions/${safeTxHash}/`
-      )
+      if (this.provider) {
+        const safeOwner = await this.provider.getSigner(0)
 
-      return res.data
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signer: safeOwner,
+        })
+
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const tx: SafeMultisigTransactionResponse =
+          await safeService.getTransaction(safeTxHash)
+
+        return tx
+      } else {
+        return {
+          message: 'Something went wrong while getting transaction info',
+          error: 'Provider is null',
+        }
+      }
     } catch (err) {
       return {
-        message: 'Error while fetching pending transactions',
+        message: 'Something went wrong while getting transaction info',
         error: `${err}`,
       }
     }
@@ -282,7 +303,7 @@ export class Gnosis {
     try {
       const owners: string[] = []
       const result = await axios.get(
-        `${this.SAFE_URL}/api/v1/safes/${safeAddress}/`
+        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/`
       )
       const safeOwners = result.data.owners
 
@@ -296,11 +317,6 @@ export class Gnosis {
       return null
     }
   }
-  //create provider
-
-  // addProvider = async (provider: Provider) => {
-
-  // }
 
   connectGnosis = async (
     userAddress: string
@@ -308,7 +324,7 @@ export class Gnosis {
     try {
       const UserSafes: UserSafe[] = []
       const result = await axios.get(
-        `${this.SAFE_URL}/api/v1/owners/${userAddress}/safes/`
+        `${this.txServiceUrl}/api/v1/owners/${userAddress}/safes/`
       )
       const userSafes: string[] = result.data.safes
       for (const userSafe of userSafes) {
@@ -323,23 +339,6 @@ export class Gnosis {
     } catch (err) {
       return {
         message: 'Error while fetching Safes For user',
-        error: `${err}`,
-      }
-    }
-  }
-
-  addProvider = async (provider: Provider) => {
-    try {
-      const result = await axios.post(
-        'http://localhost:3002/api/provider/create',
-        {
-          provider: provider,
-        }
-      )
-      return result.data
-    } catch (err) {
-      return {
-        message: 'Error while adding provider',
         error: `${err}`,
       }
     }

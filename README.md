@@ -44,21 +44,29 @@ To use Gnosis
 const gnosis = new Gnosis(provider: Web3Provider, chaindId: number)
 ```
 
-### To create a gnosis transaction
+### To create a single gnosis transaction
 
 ```sh
-const result = await gnosis.gnosisInit(safeAddress: string, receiverAddress: string, paymentValueInWei: string)
+const result = await gnosis.createSingleGnosisTx(receiverAddress: string, value: string,
+safeAddress: string, senderAddress: string)
 ```
 
 > Param 1: `safeAddress` Gnosis safe address.
 > Param 2: `receiverAddress` Wallet address of the user whom the funds is being sent.
-> Param 3: `safeAddress` ETH value in wei.
+> Param 3: `value` ETH value in wei.
+> Param 4: `senderAddress` Waller address of the sender
 
-Example
+### To create a batch gnosis transaction
 
 ```sh
-const result = await gnosis.gnosisInit("0xE666431e8Ba10B17D296aB16A4FF8d9A552eb488", "0xB1BFB38a527D05442D48068ca9798FD3E5d6ce0F", "100000000")
+const result = await gnosis.createBatchGnosisTx(safeAddress: string, receiverAddresses: string[],
+value: string, senderAddress: string)
 ```
+
+> Param 1: `safeAddress` Gnosis safe address.
+> Param 2: `receiverAddresses` Wallet addresses of the users whom the funds is being sent.
+> Param 3: `value` ETH value in wei.
+> Param 4: `senderAddress` Waller address of the sender
 
 ### To get pending transactions for a safe
 
@@ -116,51 +124,6 @@ Example
 
 ```sh
 const result = await gnosis.gnosisConnect("0x4a429ae97dd5bac92e9eef8e28fba94cf8813474c485228e58d81f04c332c399")
-```
-
-### To add a gnosis safe
-
-After user selects a safe, we can add it to the DAO by calling the following
-
-```sh
-const result = await gnosis.addProvider(provider: Provider)
-```
-
-> Param 1: `provider`
-
-The type Provider has following fields
-
-```sh
-Provider = {
-  id: string
-  dao_id: string
-  provider_type: ProviderType
-  address: string
-  chain_id: string
-  created_by: string
-  created_at: string
-  updated_at: string
-}
-
-enum ProviderType = {
-    'WALLET' = 'WALLET',
-  'GNOSIS' = 'GNOSIS',
-}
-```
-
-Example
-
-```sh
-const provider: Provider = {
-    dao_id: "DaoID",
-    provider_type: ProviderType.GNOSIS
-    address: "safeAddress",
-    chain_id: 1,
-    created_by: "user uuid"
-
-}
-
-const result = await gnosis.addProvider(provider)
 ```
 
 ---
