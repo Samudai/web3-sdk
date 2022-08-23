@@ -1,16 +1,23 @@
 import { ethers } from 'ethers'
 import { Provider, Web3Provider } from '@ethersproject/providers'
-import Safe, { SafeTransactionOptionalProps } from '@gnosis.pm/safe-core-sdk'
+import Safe, {
+  EthSignSignature,
+  SafeTransactionOptionalProps,
+} from '@gnosis.pm/safe-core-sdk'
 import EthersAdapter from '@gnosis.pm/safe-ethers-lib'
 import axios from 'axios'
 import { Networks } from '../utils/networks'
 import {
   MetaTransactionData,
+  SafeSignature,
+  SafeTransactionData,
   SafeTransactionDataPartial,
 } from '@gnosis.pm/safe-core-sdk-types'
 import SafeServiceClient, {
+  SafeInfoResponse,
   SafeMultisigTransactionListResponse,
   SafeMultisigTransactionResponse,
+  SignatureResponse,
 } from '@gnosis.pm/safe-service-client'
 import {
   ErrorResponse,
@@ -294,6 +301,215 @@ export class Gnosis {
     } catch (err) {
       return {
         message: 'Something went wrong while getting transaction info',
+        error: `${err}`,
+      }
+    }
+  }
+
+  isTransactionOwner = async (
+    safeAddress: string
+  ): Promise<boolean | ErrorResponse> => {
+    try {
+      if (this.provider) {
+        let isOwner = false
+        const safeOwner = await this.provider.getSigner(0)
+        const userAddress = await safeOwner.getAddress()
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signer: safeOwner,
+        })
+
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const safeInfo: SafeInfoResponse = await safeService.getSafeInfo(
+          safeAddress
+        )
+
+        safeInfo.owners.find((owner) => {
+          if (owner === userAddress) {
+            isOwner = true
+          } else {
+            isOwner = false
+          }
+        })
+
+        return isOwner
+      } else {
+        return {
+          message: 'Something went wrong while getting transaction info',
+          error: 'Provider is null',
+        }
+      }
+    } catch (err) {
+      return {
+        message: 'Something went wrong while getting transaction info',
+        error: `${err}`,
+      }
+    }
+  }
+
+  isTransactionExecutable = async (
+    safeTxHash: string,
+    safeAddress: string
+  ): Promise<boolean | ErrorResponse> => {
+    try {
+      if (this.provider) {
+        const safeOwner = await this.provider.getSigner(0)
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signer: safeOwner,
+        })
+
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const transaction: SafeMultisigTransactionResponse =
+          await safeService.getTransaction(safeTxHash)
+
+        const safeInfo: SafeInfoResponse = await safeService.getSafeInfo(
+          safeAddress
+        )
+        if (transaction.confirmations) {
+          return transaction.confirmations.length >= safeInfo.threshold
+        } else {
+          return false
+        }
+      } else {
+        return {
+          message: 'Something went wrong while getting transaction info',
+          error: 'Provider is null',
+        }
+      }
+    } catch (err) {
+      return {
+        message: 'Something went wrong while getting transaction info',
+        error: `${err}`,
+      }
+    }
+  }
+
+  confirmTransaction = async (
+    safeTxHash: string,
+    safeAddress: string
+  ): Promise<SignatureResponse | ErrorResponse> => {
+    try {
+      if (this.provider) {
+        this.safeAddress = ethers.utils.getAddress(safeAddress)
+
+        const safeOwner = await this.provider.getSigner(0)
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signer: safeOwner,
+        })
+
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const safeSDK = await Safe.create({
+          ethAdapter: this.etherAdapter,
+          safeAddress: this.safeAddress,
+        })
+
+        const signature: SafeSignature = await safeSDK.signTransactionHash(
+          safeTxHash
+        )
+        const result: SignatureResponse = await safeService.confirmTransaction(
+          safeTxHash,
+          signature.data
+        )
+
+        return result
+      } else {
+        return {
+          message: 'Something went wrong while confirming transaction',
+          error: 'Provider is null',
+        }
+      }
+    } catch (err) {
+      return {
+        message: 'Something went wrong while confirming transaction',
+        error: `${err}`,
+      }
+    }
+  }
+
+  executeTransaction = async (
+    safeTxHash: string,
+    safeAddress: string
+  ): Promise<any> => {
+    try {
+      if (this.provider) {
+        this.safeAddress = ethers.utils.getAddress(safeAddress)
+
+        const safeOwner = await this.provider.getSigner(0)
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signer: safeOwner,
+        })
+
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const safeSDK = await Safe.create({
+          ethAdapter: this.etherAdapter,
+          safeAddress: this.safeAddress,
+        })
+
+        const transaction: SafeMultisigTransactionResponse =
+          await safeService.getTransaction(safeTxHash)
+
+        const safeTransactionData: SafeTransactionData = {
+          to: transaction.to,
+          value: transaction.value,
+          data: transaction.data || '0x',
+          operation: transaction.operation,
+          safeTxGas: transaction.safeTxGas,
+          baseGas: transaction.baseGas,
+          gasPrice: parseInt(transaction.gasPrice),
+          gasToken: transaction.gasToken,
+          refundReceiver: transaction.refundReceiver!,
+          nonce: transaction.nonce,
+        }
+
+        const safeTransaction = await safeSDK.createTransaction(
+          safeTransactionData
+        )
+
+        transaction.confirmations!.forEach((confirmation) => {
+          const signature = new EthSignSignature(
+            confirmation.owner,
+            confirmation.signature
+          )
+          safeTransaction.addSignature(signature)
+        })
+
+        const executeTxResponse = await safeSDK.executeTransaction(
+          safeTransaction
+        )
+
+        const receipt =
+          executeTxResponse.transactionResponse &&
+          (await executeTxResponse.transactionResponse.wait())
+
+        return receipt
+      } else {
+        return {
+          message: 'Something went wrong while executing transaction',
+          error: 'Provider is null',
+        }
+      }
+    } catch (err) {
+      return {
+        message: 'Something went wrong while executing transaction',
         error: `${err}`,
       }
     }

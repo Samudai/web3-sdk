@@ -11,4 +11,10 @@ export const Networks = [
     url: 'https://safe-transaction.rinkeby.gnosis.io',
     relayUrl: 'https://safe-relay.rinkeby.gnosis.io',
   },
+  {
+    name: 'Polygon',
+    chainId: 5,
+    url: 'https://safe-transaction.polygon.gnosis.io/',
+    relayUrl: 'https://safe-relay.polygon.gnosis.io/',
+  },
 ]
