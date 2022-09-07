@@ -14,6 +14,7 @@ import {
   SafeTransactionDataPartial,
 } from '@gnosis.pm/safe-core-sdk-types'
 import SafeServiceClient, {
+  SafeBalanceUsdResponse,
   SafeInfoResponse,
   SafeMultisigTransactionListResponse,
   SafeMultisigTransactionResponse,
@@ -555,6 +556,43 @@ export class Gnosis {
     } catch (err) {
       return {
         message: 'Error while fetching Safes For user',
+        error: `${err}`,
+      }
+    }
+  }
+
+  getSafeBalance = async (
+    safeAddress: string
+  ): Promise<SafeBalanceUsdResponse | ErrorResponse> => {
+    try {
+      const result = await axios.get(
+        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/balances/usd/?trusted=false&exclude_spam=false`
+      )
+      const balance: SafeBalanceUsdResponse = result.data
+      return balance
+    } catch (err) {
+      return {
+        message: 'Error while fetching Safes Balances',
+        error: `${err}`,
+      }
+    }
+  }
+
+  verifySafe = async (
+    safeAddress: string
+  ): Promise<boolean | ErrorResponse> => {
+    try {
+      const result = await axios.get(
+        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/`
+      )
+      if (result.status === 200) {
+        return true
+      } else {
+        return false
+      }
+    } catch (err) {
+      return {
+        message: 'Error while fetching Safes Balances',
         error: `${err}`,
       }
     }
