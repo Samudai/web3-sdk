@@ -592,7 +592,7 @@ export class Gnosis {
       }
     } catch (err) {
       return {
-        message: 'Error while fetching Safes Balances',
+        message: 'Error while fetching Safes Verification',
         error: `${err}`,
       }
     }

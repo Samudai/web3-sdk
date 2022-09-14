@@ -14,13 +14,13 @@ export const Networks = [
   {
     name: 'Polygon',
     chainId: 5,
-    url: 'https://safe-transaction.polygon.gnosis.io/',
-    relayUrl: 'https://safe-relay.polygon.gnosis.io/',
+    url: 'https://safe-transaction.polygon.gnosis.io',
+    relayUrl: 'https://safe-relay.polygon.gnosis.io',
   },
   {
     name: 'Goerli',
     chainId: 5,
-    url: 'https://safe-transaction.goerli.gnosis.io/',
-    relayUrl: 'https://safe-relay.goerli.gnosis.io/',
+    url: 'https://safe-transaction.goerli.gnosis.io',
+    relayUrl: 'https://safe-relay.goerli.gnosis.io',
   },
 ]
