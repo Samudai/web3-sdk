@@ -563,12 +563,12 @@ export class Gnosis {
 
   getSafeBalance = async (
     safeAddress: string
-  ): Promise<SafeBalanceUsdResponse | ErrorResponse> => {
+  ): Promise<SafeBalanceUsdResponse[] | ErrorResponse> => {
     try {
       const result = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${safeAddress}/balances/usd/?trusted=false&exclude_spam=false`
       )
-      const balance: SafeBalanceUsdResponse = result.data
+      const balance: SafeBalanceUsdResponse[] = result.data
       return balance
     } catch (err) {
       return {
