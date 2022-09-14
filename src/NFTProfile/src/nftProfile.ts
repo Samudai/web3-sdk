@@ -8,13 +8,13 @@ import { ErrorResponse } from '../utils/types'
 
 export class NFTProfile {
   private ethSettings = {
-    apiKey: 'd312tFc0mqUjLj_o0gZvvJ2wBmrzs0LW', // Replace with your Alchemy API Key.
+    apiKey: 'EWRBsxoNtUE-t_6HQ03GgzlK7zdcr80n', // Replace with your Alchemy API Key.
     network: Network.ETH_MAINNET, // Replace with your network.
     maxRetries: 10,
   }
 
   private polygonSettings = {
-    apiKey: 'd312tFc0mqUjLj_o0gZvvJ2wBmrzs0LW', // Replace with your Alchemy API Key.
+    apiKey: 'EWRBsxoNtUE-t_6HQ03GgzlK7zdcr80n', // Replace with your Alchemy API Key.
     network: Network.MATIC_MAINNET, // Replace with your network.
     maxRetries: 10,
   }
