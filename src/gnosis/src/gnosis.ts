@@ -578,9 +578,7 @@ export class Gnosis {
     }
   }
 
-  verifySafe = async (
-    safeAddress: string
-  ): Promise<boolean | ErrorResponse> => {
+  verifySafe = async (safeAddress: string): Promise<boolean> => {
     try {
       const result = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${safeAddress}/`
@@ -591,10 +589,7 @@ export class Gnosis {
         return false
       }
     } catch (err) {
-      return {
-        message: 'Error while fetching Safes Verification',
-        error: `${err}`,
-      }
+      return false
     }
   }
 }
