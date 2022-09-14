@@ -1,4 +1,18 @@
 import { Web3Provider } from '@ethersproject/providers'
+export {
+  MetaTransactionData,
+  SafeSignature,
+  SafeTransactionData,
+  SafeTransactionDataPartial,
+} from '@gnosis.pm/safe-core-sdk-types'
+
+export {
+  SafeBalanceUsdResponse,
+  SafeInfoResponse,
+  SafeMultisigTransactionListResponse,
+  SafeMultisigTransactionResponse,
+  SignatureResponse,
+} from '@gnosis.pm/safe-service-client'
 
 export enum ProviderType {
   'WALLET' = 'WALLET',
