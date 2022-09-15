@@ -22,6 +22,7 @@ import SafeServiceClient, {
 } from '@gnosis.pm/safe-service-client'
 import {
   ErrorResponse,
+  SafeExecutionStatus,
   SafeTransactionResponse,
   SafeTransactions,
   UserSafe,
@@ -355,10 +356,14 @@ export class Gnosis {
   isTransactionExecutable = async (
     safeTxHash: string,
     safeAddress: string
-  ): Promise<boolean | ErrorResponse> => {
+  ): Promise<SafeExecutionStatus | ErrorResponse> => {
     try {
       if (this.provider) {
+        let isOwner = false
+        let isExecutable = false
+        let isConfirmation = false
         const safeOwner = await this.provider.getSigner(0)
+        const userAddress = await safeOwner.getAddress()
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
           signer: safeOwner,
@@ -375,10 +380,44 @@ export class Gnosis {
         const safeInfo: SafeInfoResponse = await safeService.getSafeInfo(
           safeAddress
         )
-        if (transaction.confirmations) {
-          return transaction.confirmations.length >= safeInfo.threshold
+
+        const isSafeOwner = safeInfo.owners.find(
+          (owner) => owner === ethers.utils.getAddress(userAddress)
+        )
+
+        if (isSafeOwner) {
+          isOwner = true
         } else {
-          return false
+          isOwner = false
+        }
+
+        if (isOwner) {
+          const confirmation = transaction.confirmations!.find(
+            (confirmation) =>
+              confirmation.owner === ethers.utils.getAddress(userAddress)
+          )
+          if (confirmation) {
+            isConfirmation = true
+          } else {
+            isConfirmation = false
+          }
+          if (transaction.confirmations) {
+            if (transaction.confirmations.length >= safeInfo.threshold) {
+              isExecutable = true
+            } else {
+              isExecutable = false
+            }
+          }
+
+          return {
+            isOwner,
+            isConfirmation,
+            isExecutable,
+          }
+        } else {
+          return {
+            isOwner,
+          }
         }
       } else {
         return {

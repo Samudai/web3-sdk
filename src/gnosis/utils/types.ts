@@ -115,3 +115,9 @@ export type UserSafe = {
   safeAddress: string
   owners: string[] | null
 }
+
+export type SafeExecutionStatus = {
+  isOwner: boolean
+  isConfirmation?: boolean
+  isExecutable?: boolean
+}
