@@ -397,9 +397,9 @@ export class Gnosis {
               confirmation.owner === ethers.utils.getAddress(userAddress)
           )
           if (confirmation) {
-            isConfirmation = true
-          } else {
             isConfirmation = false
+          } else {
+            isConfirmation = true
           }
           if (transaction.confirmations) {
             if (transaction.confirmations.length >= safeInfo.threshold) {
