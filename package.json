@@ -1,6 +1,6 @@
 {
   "name": "@samudai_xyz/web3-sdk",
-  "version": "0.0.19-alpha",
+  "version": "0.0.20-alpha",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -57,7 +57,8 @@
     "ethers": "^5.6.9",
     "lit-js-sdk": "^1.1.202",
     "query-string": "^7.1.1",
-    "siwe": "^1.1.6"
+    "siwe": "^1.1.6",
+    "web3": "^1.8.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",

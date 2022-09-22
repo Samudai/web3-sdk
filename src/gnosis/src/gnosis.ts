@@ -27,6 +27,7 @@ import {
   SafeTransactions,
   UserSafe,
 } from '../utils/types'
+import { encodeData } from '../lib/helpers'
 
 export class Gnosis {
   private safeAddress = ''
@@ -50,20 +51,37 @@ export class Gnosis {
 
   private generateBatchTransaction = (
     value: string,
-    receiverAddresses: string[]
+    receiverAddresses: string[],
+    tokenAddress?: string
   ): MetaTransactionData[] => {
     const transactions: MetaTransactionData[] = []
 
     const receiverValue: number = parseInt(value) / receiverAddresses.length
 
-    receiverAddresses.map((receiverAddress) => {
-      transactions.push({
-        to: receiverAddress,
-        value: receiverValue.toString(),
-        data: '0x',
-        operation: 0,
+    if (tokenAddress) {
+      receiverAddresses.map((receiverAddress) => {
+        const encodedData = encodeData(
+          ethers.utils.getAddress(receiverAddress),
+          receiverValue.toString()
+        )
+
+        transactions.push({
+          to: ethers.utils.getAddress(tokenAddress),
+          value: '0',
+          data: encodedData,
+          operation: 0,
+        })
       })
-    })
+    } else {
+      receiverAddresses.map((receiverAddress) => {
+        transactions.push({
+          to: receiverAddress,
+          value: receiverValue.toString(),
+          data: '0x',
+          operation: 0,
+        })
+      })
+    }
 
     return transactions
   }
@@ -72,7 +90,8 @@ export class Gnosis {
     receiverAddress: string,
     value: string,
     safeAddress: string,
-    senderAddress: string
+    senderAddress: string,
+    tokenAddress?: string
   ): Promise<SafeTransactionResponse | ErrorResponse> => {
     try {
       this.safeAddress = ethers.utils.getAddress(safeAddress)
@@ -97,10 +116,23 @@ export class Gnosis {
 
         const nonce = await safeService.getNextNonce(this.safeAddress)
 
+        let encodedCallData = '0x'
+
+        if (tokenAddress) {
+          encodedCallData = encodeData(
+            ethers.utils.getAddress(receiverAddress),
+            value
+          )
+        }
+
+        const to = tokenAddress ? tokenAddress : receiverAddress
+
+        const tokenValue = tokenAddress ? '0' : value
+
         const transaction: SafeTransactionDataPartial = {
-          to: ethers.utils.getAddress(receiverAddress),
-          data: '0x',
-          value: value,
+          to: ethers.utils.getAddress(to),
+          data: encodedCallData,
+          value: tokenValue,
           operation: 0,
           nonce: nonce,
         }
@@ -144,7 +176,8 @@ export class Gnosis {
     safeAddress: string,
     receiverAddresses: string[],
     value: string,
-    senderAddress: string
+    senderAddress: string,
+    tokenAddress?: string
   ): Promise<SafeTransactionResponse | ErrorResponse> => {
     try {
       this.safeAddress = ethers.utils.getAddress(safeAddress)
@@ -170,7 +203,7 @@ export class Gnosis {
         const nonce = await safeService.getNextNonce(this.safeAddress)
 
         const transactions: MetaTransactionData[] =
-          this.generateBatchTransaction(value, receiverAddresses)
+          this.generateBatchTransaction(value, receiverAddresses, tokenAddress)
 
         const options: SafeTransactionOptionalProps = {
           nonce, // Optional
