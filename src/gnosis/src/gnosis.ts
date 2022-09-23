@@ -21,6 +21,7 @@ import SafeServiceClient, {
   SignatureResponse,
 } from '@gnosis.pm/safe-service-client'
 import {
+  CustomERC20Token,
   ErrorResponse,
   SafeExecutionStatus,
   SafeTransactionResponse,
@@ -82,6 +83,38 @@ export class Gnosis {
         })
       })
     }
+
+    return transactions
+  }
+
+  private generateCustomERC20Transaction = (
+    receiverAddress: string,
+    customERC20Token: CustomERC20Token[]
+  ): MetaTransactionData[] => {
+    const transactions: MetaTransactionData[] = []
+
+    customERC20Token.map((token) => {
+      if (token.tokenAddress) {
+        const encodedData = encodeData(
+          ethers.utils.getAddress(receiverAddress),
+          token.value
+        )
+
+        transactions.push({
+          to: ethers.utils.getAddress(token.tokenAddress),
+          value: '0',
+          data: encodedData,
+          operation: 0,
+        })
+      } else {
+        transactions.push({
+          to: receiverAddress,
+          value: token.value,
+          data: '0x',
+          operation: 0,
+        })
+      }
+    })
 
     return transactions
   }
@@ -662,6 +695,80 @@ export class Gnosis {
       }
     } catch (err) {
       return false
+    }
+  }
+
+  customERC20Transfer = async (
+    safeAddress: string,
+    receiverAddress: string,
+    senderAddress: string,
+    customERC20Token: CustomERC20Token[]
+  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+    try {
+      this.safeAddress = ethers.utils.getAddress(safeAddress)
+
+      if (this.provider) {
+        const safeOwner = await this.provider.getSigner(0)
+
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signer: safeOwner,
+        })
+
+        const safeService = new SafeServiceClient({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const safeSDK = await Safe.create({
+          ethAdapter: this.etherAdapter,
+          safeAddress: this.safeAddress,
+        })
+
+        const nonce = await safeService.getNextNonce(this.safeAddress)
+
+        const transactions: MetaTransactionData[] =
+          this.generateCustomERC20Transaction(receiverAddress, customERC20Token)
+
+        const options: SafeTransactionOptionalProps = {
+          nonce, // Optional
+        }
+
+        const safeTransaction = await safeSDK.createTransaction(
+          transactions,
+          options
+        )
+
+        const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
+
+        const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
+
+        const result = await safeService.proposeTransaction({
+          safeAddress: this.safeAddress,
+          safeTransactionData: safeTransaction.data,
+          safeTxHash,
+          senderAddress: ethers.utils.getAddress(senderAddress),
+          senderSignature: senderSignature.data,
+          origin: 'Samudai Platform',
+        })
+
+        const data: SafeTransactionResponse = {
+          safeTxHash: safeTxHash,
+          proposedSafeTx: result,
+        }
+
+        return data
+      } else {
+        return {
+          message: 'Something went wrong while creating Gnosis Transaction',
+          error: 'Provider is null',
+        }
+      }
+    } catch (err: any) {
+      return {
+        message: 'Error while creating Gnosis Transaction',
+        error: `${err}`,
+      }
     }
   }
 }

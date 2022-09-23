@@ -121,3 +121,8 @@ export type SafeExecutionStatus = {
   isConfirmation?: boolean
   isExecutable?: boolean
 }
+
+export type CustomERC20Token = {
+  tokenAddress: string | null
+  value: string
+}
