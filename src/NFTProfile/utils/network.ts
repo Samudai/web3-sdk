@@ -5,7 +5,7 @@ export const NFTNetworks = [
     name: 'mainnet',
     chainId: 1,
     config: {
-      apiKey: 'EWRBsxoNtUE-t_6HQ03GgzlK7zdcr80n', // Replace with your Alchemy API Key.
+      apiKey: '-vEZ1REFNLC_859_N4jfuGobh3CCdn8N', // Replace with your Alchemy API Key.
       network: Network.ETH_MAINNET, // Replace with your network.
       maxRetries: 10,
     },
@@ -14,7 +14,7 @@ export const NFTNetworks = [
     name: 'rinkeby',
     chainId: 4,
     config: {
-      apiKey: 'EWRBsxoNtUE-t_6HQ03GgzlK7zdcr80n', // Replace with your Alchemy API Key.
+      apiKey: '-vEZ1REFNLC_859_N4jfuGobh3CCdn8N', // Replace with your Alchemy API Key.
       network: Network.ETH_RINKEBY, // Replace with your network.
       maxRetries: 10,
     },
@@ -23,7 +23,7 @@ export const NFTNetworks = [
     name: 'goerli',
     chainId: 5,
     config: {
-      apiKey: 'EWRBsxoNtUE-t_6HQ03GgzlK7zdcr80n', // Replace with your Alchemy API Key.
+      apiKey: '-vEZ1REFNLC_859_N4jfuGobh3CCdn8N', // Replace with your Alchemy API Key.
       network: Network.ETH_GOERLI, // Replace with your network.
       maxRetries: 10,
     },
@@ -32,7 +32,7 @@ export const NFTNetworks = [
     name: 'polygon',
     chainId: 137,
     config: {
-      apiKey: 'EWRBsxoNtUE-t_6HQ03GgzlK7zdcr80n', // Replace with your Alchemy API Key.
+      apiKey: '-vEZ1REFNLC_859_N4jfuGobh3CCdn8N', // Replace with your Alchemy API Key.
       network: Network.MATIC_MAINNET, // Replace with your network.
       maxRetries: 10,
     },
