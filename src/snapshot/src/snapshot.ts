@@ -12,7 +12,7 @@ export class Snapshot {
   constructor(spaceId: string, networkType: number, provider: Web3Provider) {
     this.spaceId = spaceId
     this.queries = new SnapshotQueries(networkType)
-    if (networkType === 0) {
+    if (networkType === 1) {
       this.hub = 'https://hub.snapshot.org'
     } else {
       this.hub = 'https://testnet.snapshot.org'
