@@ -339,6 +339,21 @@ export class Gnosis {
     }
   }
 
+  getRecentTransactions = async (safeAddress: string) => {
+    try {
+      const res = await axios.get(
+        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/all-transactions/?limit=20&executed=false&queued=true&trusted=true`
+      )
+
+      return res.data
+    } catch (err) {
+      return {
+        message: 'Error while fetching pending transactions',
+        error: `${err}`,
+      }
+    }
+  }
+
   getTransactionDetails = async (
     safeTxHash: string
   ): Promise<SafeMultisigTransactionResponse | ErrorResponse> => {
