@@ -8,7 +8,7 @@ export class SnapshotQueries {
     if (type === 1) {
       this.url = 'https://hub.snapshot.org/graphql'
     } else {
-      this.url = 'https://testnet.snapshot.org/graphql'
+      this.url = 'https://hub.snapshot.org/graphql'
     }
   }
 

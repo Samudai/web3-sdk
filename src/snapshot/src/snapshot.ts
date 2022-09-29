@@ -15,7 +15,7 @@ export class Snapshot {
     if (networkType === 1) {
       this.hub = 'https://hub.snapshot.org'
     } else {
-      this.hub = 'https://testnet.snapshot.org'
+      this.hub = 'https://hub.snapshot.org'
     }
 
     this.client = new snapshot.Client712(this.hub)

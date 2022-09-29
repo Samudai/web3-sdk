@@ -4,6 +4,7 @@ export * from './NFTProfile/src/nftProfile'
 export * from './snapshot/src/snapshot'
 export * from './siwe/src/siwe'
 export * from './debank/src/debank'
+export * from './gnosis-fetch/src/gnosisfetch'
 
 export * as GnosisTypes from './gnosis/utils/types'
 export * as LitProtocolTypes from './lit-protocol/utils/types'
