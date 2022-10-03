@@ -2,15 +2,7 @@
 const axios = require('axios')
 
 export class SnapshotQueries {
-  private url
-
-  constructor(type: number) {
-    if (type === 1) {
-      this.url = 'https://hub.snapshot.org/graphql'
-    } else {
-      this.url = 'https://hub.snapshot.org/graphql'
-    }
-  }
+  private url = 'https://hub.snapshot.org/graphql'
 
   getSpace = async (spaceId: string) => {
     try {

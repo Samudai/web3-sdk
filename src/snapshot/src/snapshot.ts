@@ -3,24 +3,12 @@ import snapshot from '@snapshot-labs/snapshot.js'
 import { SnapshotQueries } from '../lib/snapshotQueries'
 
 export class Snapshot {
-  private queries: SnapshotQueries
+  private queries: SnapshotQueries = new SnapshotQueries()
   private spaceId: string
-  private provider: Web3Provider
-  private hub: string
-  private client
+  private hub = 'https://hub.snapshot.org'
 
-  constructor(spaceId: string, networkType: number, provider: Web3Provider) {
+  constructor(spaceId: string) {
     this.spaceId = spaceId
-    this.queries = new SnapshotQueries(networkType)
-    if (networkType === 1) {
-      this.hub = 'https://hub.snapshot.org'
-    } else {
-      this.hub = 'https://hub.snapshot.org'
-    }
-
-    this.client = new snapshot.Client712(this.hub)
-
-    this.provider = provider
   }
 
   getSpace = async (): Promise<any> => {
@@ -62,16 +50,20 @@ export class Snapshot {
   castVote = async (
     proposalId: string,
     choice: number,
-    account: any
+    account: any,
+    provider: Web3Provider
   ): Promise<any> => {
     try {
+      const client = new snapshot.Client712(this.hub)
+
       const result = await this.queries.getProposal(proposalId)
+
       if (result) {
         const space: string = result.space.id
         const proposal: string = proposalId
         const type: string = result.type
 
-        const voteReceipt = await this.client.vote(this.provider, account, {
+        const voteReceipt = await client.vote(provider, account, {
           space: space,
           proposal: proposal,
           choice: choice,
