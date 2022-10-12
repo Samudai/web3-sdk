@@ -1,6 +1,6 @@
 {
   "name": "@samudai_xyz/web3-sdk",
-  "version": "0.0.27-alpha",
+  "version": "0.0.28-alpha",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -52,6 +52,7 @@
     "@gnosis.pm/safe-ethers-lib": "^1.4.0",
     "@gnosis.pm/safe-service-client": "^1.2.0",
     "@snapshot-labs/snapshot.js": "^0.4.13",
+    "alchemy-sdk": "^2.1.1",
     "axios": "^0.27.2",
     "crypto-browserify": "^3.12.0",
     "ethers": "^5.6.9",
