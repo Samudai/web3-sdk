@@ -20,7 +20,7 @@ export const Networks = [
   {
     name: 'Goerli',
     chainId: 5,
-    url: 'https://safe-transaction.goerli.gnosis.io',
+    url: 'https://safe-transaction-goerli.safe.global',
     relayUrl: 'https://safe-relay.goerli.gnosis.io',
   },
 ]
