@@ -644,9 +644,9 @@ export class Gnosis {
       )
       const safeOwners = result.data.owners
 
-      for (const owner of owners) {
-        const address = (await this.provider?.lookupAddress(owner)) || owner
-        owners.push(address)
+      for (const owner of safeOwners) {
+        //const address = (await this.provider?.lookupAddress(owner)) || owner
+        owners.push(owner)
       }
 
       return owners
