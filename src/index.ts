@@ -6,6 +6,7 @@ export * from './siwe/src/siwe'
 export * from './debank/src/debank'
 export * from './gnosis-fetch/src/gnosisfetch'
 export * from './tokenBalance/src/tokenbalance'
+export * from './subdomain/src/subdomain'
 
 export * as GnosisTypes from './gnosis/utils/types'
 export * as LitProtocolTypes from './lit-protocol/utils/types'
