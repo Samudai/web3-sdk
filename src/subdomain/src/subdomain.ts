@@ -1,7 +1,6 @@
 import { ethers } from 'ethers'
 import { TransactionResponse, Web3Provider } from '@ethersproject/providers'
 import ContractABI from '../contracts/abi.json'
-import { contract_address } from '../contracts/constants.js'
 import { ErrorResponse } from '../utils/types'
 
 export class Subdomain {
@@ -9,14 +8,10 @@ export class Subdomain {
   private chainId: number | null = null
   private contractAddress = ''
 
-  constructor(provider: Web3Provider, chainId: number) {
+  constructor(provider: Web3Provider) {
     this.provider = provider
     //this.chainId = chainId
-    contract_address.forEach((contract) => {
-      if (contract.chainId === chainId) {
-        this.contractAddress = contract.address
-      }
-    })
+    this.contractAddress = '0x56fCFB4eE23e703592Fb3c4c20D7EC2EEbC067c6'
   }
 
   claimSubdomain = async (
