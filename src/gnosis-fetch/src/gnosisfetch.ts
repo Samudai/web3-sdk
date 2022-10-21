@@ -1,5 +1,9 @@
 import { Networks } from '../../gnosis/utils/networks'
-import { ErrorResponse, SafeTransactions } from '../../gnosis/utils/types'
+import {
+  ErrorResponse,
+  SafeTransactions,
+  TransactionDetails,
+} from '../../gnosis/utils/types'
 import axios from 'axios'
 import {
   SafeMultisigTransactionResponse,
@@ -68,14 +72,27 @@ export class GnosisFetch {
 
   getTransactionDetails = async (
     txHash: string
-  ): Promise<SafeMultisigTransactionResponse | ErrorResponse> => {
+  ): Promise<TransactionDetails | ErrorResponse> => {
     try {
       if (this.safeAddress !== '') {
         const res = await axios.get(
           `${this.txServiceUrl}/api/v1/multisig-transactions/${txHash}`
         )
 
-        return res.data
+        const safeInfo = await axios.get(
+          `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}`
+        )
+
+        //const safeData = safeInfo.data
+
+        const confirmations: number = safeInfo.data.threshold
+
+        const data: TransactionDetails = {
+          confirmation: confirmations,
+          safeMultisigTransactionResponse: res.data,
+        }
+
+        return data
       } else {
         return {
           message: 'Error while fetching transaction details',
@@ -87,6 +104,25 @@ export class GnosisFetch {
         message: 'Error while fetching transaction details',
         error: `${err}`,
       }
+    }
+  }
+
+  getSafeOwners = async (safeAddress: string): Promise<string[] | null> => {
+    try {
+      const owners: string[] = []
+      const result = await axios.get(
+        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/`
+      )
+      const safeOwners = result.data.owners
+
+      for (const owner of safeOwners) {
+        //const address = (await this.provider?.lookupAddress(owner)) || owner
+        owners.push(owner)
+      }
+
+      return owners
+    } catch (err) {
+      return null
     }
   }
 
