@@ -26,6 +26,7 @@ import {
   SafeExecutionStatus,
   SafeTransactionResponse,
   SafeTransactions,
+  TransactionDetails,
   UserSafe,
 } from '../utils/types'
 import { encodeData } from '../lib/helpers'
@@ -356,7 +357,7 @@ export class Gnosis {
 
   getTransactionDetails = async (
     safeTxHash: string
-  ): Promise<SafeMultisigTransactionResponse | ErrorResponse> => {
+  ): Promise<TransactionDetails | ErrorResponse> => {
     try {
       if (this.provider) {
         const safeOwner = await this.provider.getSigner(0)
@@ -374,7 +375,14 @@ export class Gnosis {
         const tx: SafeMultisigTransactionResponse =
           await safeService.getTransaction(safeTxHash)
 
-        return tx
+        const safeOwners = await this.getSafeOwners(tx.safe)
+
+        const data: TransactionDetails = {
+          safeMultisigTransactionResponse: tx,
+          confirmation: safeOwners!.length,
+        }
+
+        return data
       } else {
         return {
           message: 'Something went wrong while getting transaction info',

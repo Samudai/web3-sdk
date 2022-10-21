@@ -1,4 +1,5 @@
 import { Web3Provider } from '@ethersproject/providers'
+import { SafeMultisigTransactionResponse } from '@gnosis.pm/safe-service-client'
 export {
   MetaTransactionData,
   SafeSignature,
@@ -125,4 +126,9 @@ export type SafeExecutionStatus = {
 export type CustomERC20Token = {
   tokenAddress: string | null
   value: string
+}
+
+export type TransactionDetails = {
+  safeMultisigTransactionResponse: SafeMultisigTransactionResponse
+  confirmation: number
 }
