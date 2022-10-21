@@ -1,6 +1,6 @@
 {
   "name": "@samudai_xyz/web3-sdk",
-  "version": "0.0.33-alpha",
+  "version": "0.0.34-alpha",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
