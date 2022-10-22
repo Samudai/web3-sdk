@@ -54,7 +54,7 @@ export class Snapshot {
     provider: Web3Provider
   ): Promise<any> => {
     try {
-      const client = new snapshot.Client712(this.hub)
+      const client = new snapshot.Client712('https://hub.snapshot.org')
 
       const result = await this.queries.getProposal(proposalId)
 
