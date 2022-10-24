@@ -7,11 +7,13 @@ export * from './debank/src/debank'
 export * from './gnosis-fetch/src/gnosisfetch'
 export * from './tokenBalance/src/tokenbalance'
 export * from './subdomain/src/subdomain'
+export * from './farcaster/src/farcaster'
 
 export * as GnosisTypes from './gnosis/utils/types'
 export * as LitProtocolTypes from './lit-protocol/utils/types'
 export * as NFTProfileTypes from './NFTProfile/utils/types'
 export * as SiweTypes from './siwe/utils/types'
 export * as TokenBalanceType from './tokenBalance/utils/types'
+export * as FarcasterTypes from './farcaster/utils/types'
 
 export * as GnosisNetworks from './gnosis/utils/networks'
