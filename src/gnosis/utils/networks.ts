@@ -2,7 +2,7 @@ export const Networks = [
   {
     name: 'Ethereum Mainnet',
     chainId: 1,
-    url: 'https://safe-transaction.mainnet.gnosis.io',
+    url: 'https://safe-transaction-mainnet.safe.global',
     relayUrl: 'https://safe-relay.mainnet.gnosis.io',
   },
   {
@@ -14,7 +14,7 @@ export const Networks = [
   {
     name: 'Polygon',
     chainId: 137,
-    url: 'https://safe-transaction.polygon.gnosis.io',
+    url: 'https://safe-transaction-polygon.safe.global',
     relayUrl: 'https://safe-relay.polygon.gnosis.io',
   },
   {
