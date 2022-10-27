@@ -375,11 +375,11 @@ export class Gnosis {
         const tx: SafeMultisigTransactionResponse =
           await safeService.getTransaction(safeTxHash)
 
-        const safeOwners = await this.getSafeOwners(tx.safe)
+        const safeOwners = await safeService.getSafeInfo(this.safeAddress)
 
         const data: TransactionDetails = {
           safeMultisigTransactionResponse: tx,
-          confirmation: safeOwners!.length,
+          confirmation: safeOwners.threshold,
         }
 
         return data
