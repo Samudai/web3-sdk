@@ -8,6 +8,7 @@ import axios from 'axios'
 import {
   SafeMultisigTransactionResponse,
   SafeBalanceUsdResponse,
+  SafeMultisigTransactionListResponse,
 } from '@gnosis.pm/safe-service-client'
 export class GnosisFetch {
   private safeAddress = ''
@@ -107,11 +108,11 @@ export class GnosisFetch {
     }
   }
 
-  getSafeOwners = async (safeAddress: string): Promise<string[] | null> => {
+  getSafeOwners = async (): Promise<string[] | null> => {
     try {
       const owners: string[] = []
       const result = await axios.get(
-        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/`
+        `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/`
       )
       const safeOwners = result.data.owners
 
@@ -138,6 +139,34 @@ export class GnosisFetch {
     } catch (err) {
       return {
         message: 'Error while fetching Safes Balances',
+        error: `${err}`,
+      }
+    }
+  }
+
+  getPendingTransactions = async (): Promise<
+    SafeMultisigTransactionListResponse | ErrorResponse
+  > => {
+    try {
+      if (this.safeAddress !== '') {
+        const safeInfo = await axios.get(
+          `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}`
+        )
+        const result = await axios.get(
+          `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/multisig-transactions/?executed=false&nonce__gte=${safeInfo.data.nonce}`
+        )
+
+        const pendingTx = result.data
+        return pendingTx
+      } else {
+        return {
+          message: 'Something went wrong while getting pending transactions',
+          error: 'Provider is null',
+        }
+      }
+    } catch (err) {
+      return {
+        message: 'Something went wrong while getting pending transactions',
         error: `${err}`,
       }
     }
