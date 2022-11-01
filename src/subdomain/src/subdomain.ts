@@ -4,28 +4,44 @@ import ContractABI from '../contracts/abi.json'
 import { ErrorResponse } from '../utils/types'
 
 export class Subdomain {
-  private provider: Web3Provider | null = null
   private chainId: number | null = null
   private contractAddress = ''
 
-  constructor(provider: Web3Provider) {
-    this.provider = provider
+  constructor() {
     //this.chainId = chainId
-    this.contractAddress = '0x56fCFB4eE23e703592Fb3c4c20D7EC2EEbC067c6'
+    this.contractAddress = '0x125ff9e0F79371C67512A002d7890aF2aD9CeA09'
   }
 
   claimSubdomain = async (
-    username: string
+    username: string,
+    provider: Web3Provider
   ): Promise<boolean | ErrorResponse> => {
     try {
-      if (this.provider && this.contractAddress) {
-        const signer = this.provider.getSigner()
+      if (provider && this.contractAddress) {
+        const signer = provider.getSigner()
+        const address = await signer.getAddress()
         const contract = new ethers.Contract(
           this.contractAddress,
-          ContractABI.abi,
+          ContractABI,
           signer
         )
-        const tx: TransactionResponse = await contract.claimSubdomain(username)
+
+        const message = JSON.stringify({
+          address: address,
+          timestamp: Date.now(),
+          message: 'I am claiming this subdomain',
+        })
+        const encoded = ethers.utils.solidityKeccak256(['string'], [message])
+
+        const signature = await signer.signMessage(
+          ethers.utils.arrayify(encoded)
+        )
+
+        const tx: TransactionResponse = await contract.claimSubdomain(
+          username,
+          message,
+          signature
+        )
         await tx.wait()
 
         if (tx) {
