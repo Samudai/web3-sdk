@@ -199,10 +199,7 @@ export class Gnosis {
         }
       }
     } catch (err: any) {
-      return {
-        message: 'Error while creating Gnosis Transaction',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -274,10 +271,7 @@ export class Gnosis {
         }
       }
     } catch (err: any) {
-      return {
-        message: 'Error while creating Gnosis Transaction',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -311,10 +305,7 @@ export class Gnosis {
         }
       }
     } catch (err) {
-      return {
-        message: 'Something went wrong while getting pending transactions',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -333,10 +324,7 @@ export class Gnosis {
 
       return res.data
     } catch (err) {
-      return {
-        message: 'Error while fetching pending transactions',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -348,10 +336,7 @@ export class Gnosis {
 
       return res.data
     } catch (err) {
-      return {
-        message: 'Error while fetching pending transactions',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -390,10 +375,7 @@ export class Gnosis {
         }
       }
     } catch (err) {
-      return {
-        message: 'Something went wrong while getting transaction info',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -435,10 +417,7 @@ export class Gnosis {
         }
       }
     } catch (err) {
-      return {
-        message: 'Something went wrong while getting transaction info',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -515,10 +494,7 @@ export class Gnosis {
         }
       }
     } catch (err) {
-      return {
-        message: 'Something went wrong while getting transaction info',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -562,10 +538,7 @@ export class Gnosis {
         }
       }
     } catch (err) {
-      return {
-        message: 'Something went wrong while confirming transaction',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -637,10 +610,7 @@ export class Gnosis {
         }
       }
     } catch (err) {
-      return {
-        message: 'Something went wrong while executing transaction',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -682,10 +652,7 @@ export class Gnosis {
 
       return UserSafes
     } catch (err) {
-      return {
-        message: 'Error while fetching Safes For user',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -699,10 +666,7 @@ export class Gnosis {
       const balance: SafeBalanceUsdResponse[] = result.data
       return balance
     } catch (err) {
-      return {
-        message: 'Error while fetching Safes Balances',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -717,7 +681,7 @@ export class Gnosis {
         return false
       }
     } catch (err) {
-      return false
+      throw err
     }
   }
 
@@ -788,10 +752,7 @@ export class Gnosis {
         }
       }
     } catch (err: any) {
-      return {
-        message: 'Error while creating Gnosis Transaction',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 }
