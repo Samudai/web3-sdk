@@ -20,7 +20,7 @@ export class Subdomain {
     provider: Web3Provider,
     member_id: string,
     jwt: string
-  ): Promise<boolean | ErrorResponse> => {
+  ): Promise<boolean> => {
     try {
       const memberCountResult = await axios.get(
         `${this.gatewayURL}/api/member/get/invitecount/${member_id}`,
@@ -66,16 +66,10 @@ export class Subdomain {
           return false
         }
       } else {
-        return {
-          error: 'Provider not found',
-          message: 'Provider not found',
-        }
+        throw new Error('Invalid provider or contract address')
       }
     } catch (err: any) {
-      return {
-        error: `${err}`,
-        message: 'Error while claiming subdomain',
-      }
+      throw err
     }
   }
 }

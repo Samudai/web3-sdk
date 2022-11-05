@@ -126,7 +126,7 @@ export class Gnosis {
     safeAddress: string,
     senderAddress: string,
     tokenAddress?: string
-  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+  ): Promise<SafeTransactionResponse> => {
     try {
       this.safeAddress = ethers.utils.getAddress(safeAddress)
 
@@ -193,10 +193,7 @@ export class Gnosis {
 
         return data
       } else {
-        return {
-          message: 'Something went wrong while creating Gnosis Transaction',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err: any) {
       throw err
@@ -209,7 +206,7 @@ export class Gnosis {
     value: string,
     senderAddress: string,
     tokenAddress?: string
-  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+  ): Promise<SafeTransactionResponse> => {
     try {
       this.safeAddress = ethers.utils.getAddress(safeAddress)
 
@@ -265,10 +262,7 @@ export class Gnosis {
 
         return data
       } else {
-        return {
-          message: 'Something went wrong while creating Gnosis Transaction',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err: any) {
       throw err
@@ -277,7 +271,7 @@ export class Gnosis {
 
   getPendingTransactions = async (
     safeAddress: string
-  ): Promise<SafeMultisigTransactionListResponse | ErrorResponse> => {
+  ): Promise<SafeMultisigTransactionListResponse> => {
     try {
       if (this.provider) {
         const safeOwner = await this.provider.getSigner(0)
@@ -299,10 +293,7 @@ export class Gnosis {
 
         return pendingTxs
       } else {
-        return {
-          message: 'Something went wrong while getting pending transactions',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err) {
       throw err
@@ -316,7 +307,7 @@ export class Gnosis {
    */
   getExecutedTransactions = async (
     safeAddress: string
-  ): Promise<SafeTransactions | ErrorResponse> => {
+  ): Promise<SafeTransactions> => {
     try {
       const res = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${safeAddress}/multisig-transactions/?executed=true`
@@ -342,7 +333,7 @@ export class Gnosis {
 
   getTransactionDetails = async (
     safeTxHash: string
-  ): Promise<TransactionDetails | ErrorResponse> => {
+  ): Promise<TransactionDetails> => {
     try {
       if (this.provider) {
         const safeOwner = await this.provider.getSigner(0)
@@ -369,19 +360,14 @@ export class Gnosis {
 
         return data
       } else {
-        return {
-          message: 'Something went wrong while getting transaction info',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err) {
       throw err
     }
   }
 
-  isTransactionOwner = async (
-    safeAddress: string
-  ): Promise<boolean | ErrorResponse> => {
+  isTransactionOwner = async (safeAddress: string): Promise<boolean> => {
     try {
       if (this.provider) {
         let isOwner = false
@@ -411,10 +397,7 @@ export class Gnosis {
 
         return isOwner
       } else {
-        return {
-          message: 'Something went wrong while getting transaction info',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err) {
       throw err
@@ -424,7 +407,7 @@ export class Gnosis {
   isTransactionExecutable = async (
     safeTxHash: string,
     safeAddress: string
-  ): Promise<SafeExecutionStatus | ErrorResponse> => {
+  ): Promise<SafeExecutionStatus> => {
     try {
       if (this.provider) {
         let isOwner = false
@@ -488,10 +471,7 @@ export class Gnosis {
           }
         }
       } else {
-        return {
-          message: 'Something went wrong while getting transaction info',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err) {
       throw err
@@ -501,7 +481,7 @@ export class Gnosis {
   confirmTransaction = async (
     safeTxHash: string,
     safeAddress: string
-  ): Promise<SignatureResponse | ErrorResponse> => {
+  ): Promise<SignatureResponse> => {
     try {
       if (this.provider) {
         this.safeAddress = ethers.utils.getAddress(safeAddress)
@@ -532,10 +512,7 @@ export class Gnosis {
 
         return result
       } else {
-        return {
-          message: 'Something went wrong while confirming transaction',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err) {
       throw err
@@ -604,10 +581,7 @@ export class Gnosis {
 
         return receipt
       } else {
-        return {
-          message: 'Something went wrong while executing transaction',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err) {
       throw err
@@ -633,9 +607,7 @@ export class Gnosis {
     }
   }
 
-  connectGnosis = async (
-    userAddress: string
-  ): Promise<UserSafe[] | ErrorResponse> => {
+  connectGnosis = async (userAddress: string): Promise<UserSafe[]> => {
     try {
       const UserSafes: UserSafe[] = []
       const result = await axios.get(
@@ -658,7 +630,7 @@ export class Gnosis {
 
   getSafeBalance = async (
     safeAddress: string
-  ): Promise<SafeBalanceUsdResponse[] | ErrorResponse> => {
+  ): Promise<SafeBalanceUsdResponse[]> => {
     try {
       const result = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${safeAddress}/balances/usd/?trusted=false&exclude_spam=false`
@@ -690,7 +662,7 @@ export class Gnosis {
     receiverAddress: string,
     senderAddress: string,
     customERC20Token: CustomERC20Token[]
-  ): Promise<SafeTransactionResponse | ErrorResponse> => {
+  ): Promise<SafeTransactionResponse> => {
     try {
       this.safeAddress = ethers.utils.getAddress(safeAddress)
 
@@ -746,10 +718,7 @@ export class Gnosis {
 
         return data
       } else {
-        return {
-          message: 'Something went wrong while creating Gnosis Transaction',
-          error: 'Provider is null',
-        }
+        throw new Error('Provider not found')
       }
     } catch (err: any) {
       throw err

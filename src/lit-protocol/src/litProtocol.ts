@@ -29,7 +29,7 @@ export class LitProtocol {
     path: string,
     memberId: string,
     tokenId?: string
-  ): Promise<string | ErrorResponse> => {
+  ): Promise<string> => {
     try {
       if (typeOfGating === TokenGatingType.ERC20) {
         this.accessControlConditions = getERC20TokenGating(
@@ -81,11 +81,7 @@ export class LitProtocol {
 
       return jwt
     } catch (err: any) {
-      console.log(err)
-      return {
-        message: "Error initializing Lit's protocol",
-        error: `Error: ${err}`,
-      }
+      throw err
     }
   }
 

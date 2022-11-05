@@ -17,10 +17,7 @@ export class Snapshot {
       const result = await this.queries.getSpace(this.spaceId)
       return result
     } catch (err) {
-      return {
-        message: "Error while getting space's details",
-        error: `Error: ${err}`,
-      }
+      throw err
     }
   }
 
@@ -29,10 +26,7 @@ export class Snapshot {
       const result = await this.queries.getActiveProposals(this.spaceId)
       return result
     } catch (err) {
-      return {
-        message: "Error while getting space's details",
-        error: `Error: ${err}`,
-      }
+      throw err
     }
   }
 
@@ -41,10 +35,7 @@ export class Snapshot {
       const result = await this.queries.getRecentProposals(this.spaceId)
       return result
     } catch (err) {
-      return {
-        message: "Error while getting space's details",
-        error: `Error: ${err}`,
-      }
+      throw err
     }
   }
 
@@ -82,10 +73,7 @@ export class Snapshot {
         return voteReceipt
       }
     } catch (err) {
-      return {
-        message: "Error while getting space's details",
-        error: `Error: ${err}`,
-      }
+      throw err
     }
   }
 }

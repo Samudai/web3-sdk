@@ -25,9 +25,7 @@ export class GnosisFetch {
     })
   }
 
-  getExecutedTransactions = async (): Promise<
-    SafeTransactions | ErrorResponse
-  > => {
+  getExecutedTransactions = async (): Promise<SafeTransactions> => {
     try {
       if (this.safeAddress !== '') {
         const res = await axios.get(
@@ -36,16 +34,10 @@ export class GnosisFetch {
 
         return res.data
       } else {
-        return {
-          message: 'Error while fetching pending transactions',
-          error: `Safe address is not set`,
-        }
+        throw new Error('Safe address not provided')
       }
     } catch (err) {
-      return {
-        message: 'Error while fetching pending transactions',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -58,22 +50,16 @@ export class GnosisFetch {
 
         return res.data
       } else {
-        return {
-          message: 'Error while fetching pending transactions',
-          error: `Safe address is not set`,
-        }
+        throw new Error('Safe address not provided')
       }
     } catch (err) {
-      return {
-        message: 'Error while fetching pending transactions',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
   getTransactionDetails = async (
     txHash: string
-  ): Promise<TransactionDetails | ErrorResponse> => {
+  ): Promise<TransactionDetails> => {
     try {
       if (this.safeAddress !== '') {
         const res = await axios.get(
@@ -95,16 +81,10 @@ export class GnosisFetch {
 
         return data
       } else {
-        return {
-          message: 'Error while fetching transaction details',
-          error: `Safe address is not set`,
-        }
+        throw new Error('Safe address not provided')
       }
     } catch (err) {
-      return {
-        message: 'Error while fetching transaction details',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
@@ -127,9 +107,7 @@ export class GnosisFetch {
     }
   }
 
-  getSafeBalance = async (): Promise<
-    SafeBalanceUsdResponse[] | ErrorResponse
-  > => {
+  getSafeBalance = async (): Promise<SafeBalanceUsdResponse[]> => {
     try {
       const result = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/balances/usd/?trusted=false&exclude_spam=false`
@@ -137,38 +115,28 @@ export class GnosisFetch {
       const balance: SafeBalanceUsdResponse[] = result.data
       return balance
     } catch (err) {
-      return {
-        message: 'Error while fetching Safes Balances',
-        error: `${err}`,
-      }
+      throw err
     }
   }
 
-  getPendingTransactions = async (): Promise<
-    SafeMultisigTransactionListResponse | ErrorResponse
-  > => {
-    try {
-      if (this.safeAddress !== '') {
-        const safeInfo = await axios.get(
-          `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}`
-        )
-        const result = await axios.get(
-          `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/multisig-transactions/?executed=false&nonce__gte=${safeInfo.data.nonce}`
-        )
+  getPendingTransactions =
+    async (): Promise<SafeMultisigTransactionListResponse> => {
+      try {
+        if (this.safeAddress !== '') {
+          const safeInfo = await axios.get(
+            `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}`
+          )
+          const result = await axios.get(
+            `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/multisig-transactions/?executed=false&nonce__gte=${safeInfo.data.nonce}`
+          )
 
-        const pendingTx = result.data
-        return pendingTx
-      } else {
-        return {
-          message: 'Something went wrong while getting pending transactions',
-          error: 'Provider is null',
+          const pendingTx = result.data
+          return pendingTx
+        } else {
+          throw new Error('Safe address not provided')
         }
-      }
-    } catch (err) {
-      return {
-        message: 'Something went wrong while getting pending transactions',
-        error: `${err}`,
+      } catch (err) {
+        throw err
       }
     }
-  }
 }

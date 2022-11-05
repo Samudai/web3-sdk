@@ -22,15 +22,12 @@ export class NFTProfile {
 
   getNFTProfilePPs = async (
     userAddress: string
-  ): Promise<OwnedNftsResponse | ErrorResponse> => {
+  ): Promise<OwnedNftsResponse> => {
     try {
       const res = await getNftsForOwner(this.alchemy, userAddress)
       return res
     } catch (err: any) {
-      return {
-        message: 'Error while getting NFTs for user',
-        error: `Error: ${err}`,
-      }
+      throw err
     }
   }
 
