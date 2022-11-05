@@ -22,10 +22,10 @@ export class Subdomain {
   ): Promise<boolean | ErrorResponse> => {
     try {
       const memberCountResult = await axios.get(
-        `${this.gatewayURL}/get/invitecount/${member_id}`
+        `${this.gatewayURL}/api/member/get/invitecount/${member_id}`
       )
 
-      const memberCount = memberCountResult.data.data.constructor
+      const memberCount = memberCountResult.data.data.count
 
       if (provider && this.contractAddress && memberCount >= 5) {
         const signer = provider.getSigner()
