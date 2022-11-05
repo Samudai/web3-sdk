@@ -18,11 +18,17 @@ export class Subdomain {
   claimSubdomain = async (
     username: string,
     provider: Web3Provider,
-    member_id: string
+    member_id: string,
+    jwt: string
   ): Promise<boolean | ErrorResponse> => {
     try {
       const memberCountResult = await axios.get(
-        `${this.gatewayURL}/api/member/get/invitecount/${member_id}`
+        `${this.gatewayURL}/api/member/get/invitecount/${member_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+          },
+        }
       )
 
       const memberCount = memberCountResult.data.data.count
