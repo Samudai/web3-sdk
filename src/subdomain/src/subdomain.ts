@@ -12,7 +12,7 @@ export class Subdomain {
   constructor(env: string) {
     //this.chainId = chainId
     this.gatewayURL = GatewayURL.find((item) => item.env === env)?.url || ''
-    this.contractAddress = '0x125ff9e0F79371C67512A002d7890aF2aD9CeA09'
+    this.contractAddress = '0xfFAeF3F8A37014B932334D283f90a2408Eba0328'
   }
 
   claimSubdomain = async (
