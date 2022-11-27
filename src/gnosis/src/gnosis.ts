@@ -29,7 +29,7 @@ import {
   TransactionDetails,
   UserSafe,
 } from '../utils/types'
-import { encodeData } from '../lib/helpers'
+import { encodeData, getDecimalsForToken } from '../lib/helpers'
 
 export class Gnosis {
   private safeAddress = ''
@@ -132,7 +132,7 @@ export class Gnosis {
 
       if (this.provider) {
         const safeOwner = await this.provider.getSigner(0)
-
+        let finalValue = value
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
           signer: safeOwner,
@@ -153,15 +153,22 @@ export class Gnosis {
         let encodedCallData = '0x'
 
         if (tokenAddress) {
+          const decimals = await getDecimalsForToken(this.chainId, tokenAddress)
+          finalValue = ethers.utils.parseUnits(value, decimals!).toString()
+        } else {
+          finalValue = ethers.utils.parseEther(value).toString()
+        }
+
+        if (tokenAddress) {
           encodedCallData = encodeData(
             ethers.utils.getAddress(receiverAddress),
-            value
+            finalValue
           )
         }
 
         const to = tokenAddress ? tokenAddress : receiverAddress
 
-        const tokenValue = tokenAddress ? '0' : value
+        const tokenValue = tokenAddress ? '0' : finalValue
 
         const transaction: SafeTransactionDataPartial = {
           to: ethers.utils.getAddress(to),

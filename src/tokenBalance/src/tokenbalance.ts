@@ -63,4 +63,26 @@ export class UserTokenBalance {
       }
     }
   }
+
+  getTokenMetadata = async (
+    chainId: number,
+    tokenAddress: string
+  ): Promise<TokenMetadataResponse> => {
+    try {
+      const network = Networks.find((network) => network.chainId === chainId)
+      if (!network) {
+        throw new Error('Invalid chainId')
+      }
+      const config = {
+        apiKey: network.config.apiKey,
+        network: network.config.network,
+      }
+      const alchemy = new Alchemy(config)
+
+      const metadata = await alchemy.core.getTokenMetadata(tokenAddress)
+      return metadata
+    } catch (err) {
+      throw new Error(`Error while getting token metadata: ${err}`)
+    }
+  }
 }
