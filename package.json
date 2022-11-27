@@ -1,10 +1,6 @@
 {
   "name": "@samudai_xyz/web3-sdk",
-<<<<<<< Updated upstream
-  "version": "0.0.47-alpha",
-=======
   "version": "0.0.48-alpha",
->>>>>>> Stashed changes
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
