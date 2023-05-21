@@ -1,5 +1,5 @@
 import { Web3Provider } from '@ethersproject/providers'
-import { SafeMultisigTransactionResponse } from '@gnosis.pm/safe-service-client'
+import { SafeMultisigTransactionResponse } from '@safe-global/safe-core-sdk-types'
 export {
   MetaTransactionData,
   SafeSignature,

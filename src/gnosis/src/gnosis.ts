@@ -1,25 +1,28 @@
 import { ethers } from 'ethers'
 import { Provider, Web3Provider } from '@ethersproject/providers'
-import Safe, {
+import {
   EthSignSignature,
-  SafeTransactionOptionalProps,
 } from '@gnosis.pm/safe-core-sdk'
-import EthersAdapter from '@gnosis.pm/safe-ethers-lib'
+import Safe, { EthersAdapter } from '@safe-global/protocol-kit'
 import axios from 'axios'
 import { Networks } from '../utils/networks'
+import { SafeTransactionOptionalProps } from '@safe-global/protocol-kit'
+import { 
+  SafeTransactionDataPartial, 
+  MetaTransactionData, 
+  SafeMultisigTransactionResponse, 
+  SafeSignature, 
+  SafeTransactionData
+} from '@safe-global/safe-core-sdk-types'
 import {
-  MetaTransactionData,
-  SafeSignature,
-  SafeTransactionData,
-  SafeTransactionDataPartial,
-} from '@gnosis.pm/safe-core-sdk-types'
-import SafeServiceClient, {
   SafeBalanceUsdResponse,
-  SafeInfoResponse,
-  SafeMultisigTransactionListResponse,
-  SafeMultisigTransactionResponse,
-  SignatureResponse,
 } from '@gnosis.pm/safe-service-client'
+import SafeApiKit, 
+{ 
+  SafeMultisigTransactionListResponse, 
+  SafeInfoResponse, 
+  SignatureResponse,
+} from '@safe-global/api-kit'
 import {
   CustomERC20Token,
   ErrorResponse,
@@ -135,10 +138,10 @@ export class Gnosis {
         let finalValue = value
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -170,7 +173,7 @@ export class Gnosis {
 
         const tokenValue = tokenAddress ? '0' : finalValue
 
-        const transaction: SafeTransactionDataPartial = {
+        const safeTransactionData: SafeTransactionDataPartial = {
           to: ethers.utils.getAddress(to),
           data: encodedCallData,
           value: tokenValue,
@@ -178,7 +181,7 @@ export class Gnosis {
           nonce: nonce,
         }
 
-        const safeTransaction = await safeSDK.createTransaction(transaction)
+        const safeTransaction = await safeSDK.createTransaction({safeTransactionData})
 
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
@@ -222,10 +225,10 @@ export class Gnosis {
 
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -237,17 +240,14 @@ export class Gnosis {
 
         const nonce = await safeService.getNextNonce(this.safeAddress)
 
-        const transactions: MetaTransactionData[] =
+        const safeTransactionData: MetaTransactionData[] =
           this.generateBatchTransaction(value, receiverAddresses, tokenAddress)
 
         const options: SafeTransactionOptionalProps = {
-          nonce, // Optional
+          nonce // Optional
         }
 
-        const safeTransaction = await safeSDK.createTransaction(
-          transactions,
-          options
-        )
+        const safeTransaction = await safeSDK.createTransaction({ safeTransactionData, options })
 
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
@@ -285,10 +285,10 @@ export class Gnosis {
 
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -347,10 +347,10 @@ export class Gnosis {
 
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -382,10 +382,10 @@ export class Gnosis {
         const userAddress = await safeOwner.getAddress()
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -424,10 +424,10 @@ export class Gnosis {
         const userAddress = await safeOwner.getAddress()
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -496,10 +496,10 @@ export class Gnosis {
         const safeOwner = await this.provider.getSigner(0)
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -537,10 +537,10 @@ export class Gnosis {
         const safeOwner = await this.provider.getSigner(0)
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -558,17 +558,17 @@ export class Gnosis {
           value: transaction.value,
           data: transaction.data || '0x',
           operation: transaction.operation,
-          safeTxGas: transaction.safeTxGas,
-          baseGas: transaction.baseGas,
-          gasPrice: parseInt(transaction.gasPrice),
+          safeTxGas: transaction.safeTxGas.toString(),
+          baseGas: transaction.baseGas.toString(),
+          gasPrice: parseInt(transaction.gasPrice).toString(),
           gasToken: transaction.gasToken,
           refundReceiver: transaction.refundReceiver!,
           nonce: transaction.nonce,
         }
 
-        const safeTransaction = await safeSDK.createTransaction(
+        const safeTransaction = await safeSDK.createTransaction({
           safeTransactionData
-        )
+        })
 
         transaction.confirmations!.forEach((confirmation) => {
           const signature = new EthSignSignature(
@@ -678,10 +678,10 @@ export class Gnosis {
 
         this.etherAdapter = new EthersAdapter({
           ethers: ethers,
-          signer: safeOwner,
+          signerOrProvider: safeOwner,
         })
 
-        const safeService = new SafeServiceClient({
+        const safeService = new SafeApiKit({
           txServiceUrl: this.txServiceUrl,
           ethAdapter: this.etherAdapter,
         })
@@ -693,17 +693,14 @@ export class Gnosis {
 
         const nonce = await safeService.getNextNonce(this.safeAddress)
 
-        const transactions: MetaTransactionData[] =
+        const safeTransactionData: MetaTransactionData[] =
           this.generateCustomERC20Transaction(receiverAddress, customERC20Token)
 
         const options: SafeTransactionOptionalProps = {
           nonce, // Optional
         }
 
-        const safeTransaction = await safeSDK.createTransaction(
-          transactions,
-          options
-        )
+        const safeTransaction = await safeSDK.createTransaction({ safeTransactionData , options})
 
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
