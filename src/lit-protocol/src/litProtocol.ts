@@ -1,4 +1,4 @@
-import LitJsSdk from 'lit-js-sdk'
+import LitJsSdk from '@lit-protocol/lit-node-client'
 import { TokenGatingType } from '../utils/enums'
 import {
   AccessControlConditions,
