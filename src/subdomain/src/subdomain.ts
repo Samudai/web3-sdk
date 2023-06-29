@@ -17,23 +17,23 @@ export class Subdomain {
 
   claimSubdomain = async (
     username: string,
-    provider: Web3Provider,
-    member_id: string,
-    jwt: string
+    provider: Web3Provider
+    // member_id: string,
+    // jwt: string
   ): Promise<boolean> => {
     try {
-      const memberCountResult = await axios.get(
-        `${this.gatewayURL}/api/member/get/invitecount/${member_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${jwt}`,
-          },
-        }
-      )
+      // const memberCountResult = await axios.get(
+      //   `${this.gatewayURL}/api/member/get/invitecount/${member_id}`,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${jwt}`,
+      //     },
+      //   }
+      // )
 
-      const memberCount = memberCountResult.data.data.count
+      // const memberCount = memberCountResult.data.data.count
 
-      if (provider && this.contractAddress && memberCount >= 5) {
+      if (provider && this.contractAddress) {
         const signer = provider.getSigner()
         const address = await signer.getAddress()
         const contract = new ethers.Contract(
