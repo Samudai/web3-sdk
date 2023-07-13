@@ -7,6 +7,7 @@ export * from './debank/src/debank'
 export * from './gnosis-fetch/src/gnosisfetch'
 export * from './tokenBalance/src/tokenbalance'
 export * from './subdomain/src/subdomain'
+export * from './NFTClaim/src/NFTClaim'
 export * from './farcaster/src/farcaster'
 
 export * as GnosisTypes from './gnosis/utils/types'
