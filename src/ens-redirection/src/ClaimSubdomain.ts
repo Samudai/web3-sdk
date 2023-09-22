@@ -55,7 +55,7 @@ export class ClaimSubdomain{
         }
     }
 
-    claimSubdomain = async(subname:string,member_id:string) : Promise<boolean> =>{
+    claimSubdomain = async(subname:string) : Promise<boolean> =>{
         try {
             const isAvailable = await this.isSubdomainAvailable(subname);
             if(isAvailable===true)

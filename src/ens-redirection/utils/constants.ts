@@ -2,7 +2,7 @@ export const LIGHTHOUSE_TOKEN = "02d70763.26a4121018614b60b6aee4499e5fb525";
 export const PVT_KEY = "827ead3af1fe623e22e2d805c2c72cbe2701c4971f351c30d4e0302b8f11c04f";
 export const RPC_URL = 'https://goerli.infura.io/v3/a87b540865194fbeb48637aed1e122e2';
 export const PROXY_CONTRACT_ADDRESS = "0x6F581A889f7C0B613a87Bf01c83ad3A309e3a8b5";
-export const ENS_DOMAIN_NAME = "venkatesh.eth";
+export const ENS_DOMAIN_NAME = "samudaitest.eth";
 
 // FUSES
 export const CANNOT_UNWRAP = 1;
