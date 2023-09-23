@@ -33,6 +33,7 @@ export class ClaimSubdomain{
             const subdomainName = subname+"."+ENS_DOMAIN_NAME;
             console.log(subdomainName);
             const subdomainHash = namehash.hash(subdomainName);
+            console.log(subdomainHash);
             const tx = await this.contractInstance.getData(subdomainHash);
             if(tx[0] === "0x0000000000000000000000000000000000000000")
             {
