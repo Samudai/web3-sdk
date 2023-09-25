@@ -3,6 +3,7 @@ import {CANNOT_SET_RESOLVER, CANNOT_UNWRAP, CAN_EXTEND_EXPIRY, ENS_DOMAIN_NAME, 
 import { ImplementationContractABI } from '../contracts/Contract_ABI';
 const namehash = require('@ensdomains/eth-ens-namehash');
 const contentHash = require('content-hash')
+import {transaction} from '../utils/types'
 
 export class ClaimSubdomain{
     private cid = "";
@@ -46,7 +47,7 @@ export class ClaimSubdomain{
         }
     }
 
-    claimSubdomain = async(subname:string) : Promise<boolean> =>{
+    claimSubdomain = async(subname:string) : Promise<transaction> =>{
         try {
             const isAvailable = await this.isSubdomainAvailable(subname);
             if(isAvailable===true)
@@ -57,10 +58,16 @@ export class ClaimSubdomain{
                 console.log("Passing all the arguments to the smart contract and calling createSubdomainWithContentHash....");
                 const tx = await this.contractInstance.createSubdomainWithContentHash(this.parentHash,subname,cidHash,fuses,GOERLI_RESOLVER);
                 console.log("TX: ",tx);
-                console.log(`Subdomain name ${subname} created with your custom content hash!`);
-                return true;
+                console.log(`Subdomain names ${subname} created with your custom content hash!`);
+                return {
+                    transactionHash:tx.hash,
+                    success:true
+                }
             }else{
-                return false;
+                return {
+                    transactionHash:"",
+                    success:false
+                }
             }
         } catch (error) {
             throw error;
