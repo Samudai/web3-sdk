@@ -19,22 +19,19 @@ export class ClaimSubdomain{
         this.contractInstance = new ethers.Contract(PROXY_CONTRACT_ADDRESS,ImplementationContractABI,this.wallet);
     }
 
-    working = () =>{
-        console.log("working fine");
-    }
-
     setCID = (cid:string) => {
-        this.cid = cid;
-        console.log("CID recieved: ",this.cid);
+        try {
+            this.cid = cid;
+        } catch (error) {
+            throw new Error("Error setting CID.");
+        }
+        
     }
 
     isSubdomainAvailable =async (subname:string) : Promise<boolean> => {
         try {
-            console.log("Checking Name availability....")
             const subdomainName = subname+"."+ENS_DOMAIN_NAME;
-            console.log(subdomainName);
             const subdomainHash = namehash.hash(subdomainName);
-            console.log(subdomainHash);
             const tx = await this.contractInstance.getData(subdomainHash);
             if(tx[0] === "0x0000000000000000000000000000000000000000")
             {
@@ -43,22 +40,18 @@ export class ClaimSubdomain{
                 return false;
             }
         } catch (error) {
-            throw error;
+            throw new Error("Error finding the availability of subdomain.");
         }
     }
 
     claimSubdomain = async(subname:string) : Promise<transaction> =>{
         try {
             const isAvailable = await this.isSubdomainAvailable(subname);
-            if(isAvailable===true)
+            if(isAvailable===true && subname!=="")
             {
                 const cidHash = "0x"+contentHash.fromIpfs(this.cid);
-                console.log("CID hash: ",cidHash);
                 const fuses = PARENT_CANNOT_CONTROL | CANNOT_UNWRAP | CANNOT_SET_RESOLVER | CAN_EXTEND_EXPIRY;
-                console.log("Passing all the arguments to the smart contract and calling createSubdomainWithContentHash....");
                 const tx = await this.contractInstance.createSubdomainWithContentHash(this.parentHash,subname,cidHash,fuses,GOERLI_RESOLVER);
-                console.log("TX: ",tx);
-                console.log(`Subdomain names ${subname} created with your custom content hash!`);
                 return {
                     transactionHash:tx.hash,
                     success:true
@@ -70,7 +63,7 @@ export class ClaimSubdomain{
                 }
             }
         } catch (error) {
-            throw error;
+            throw new Error("Error claiming the subdomain.");
         }
     }
 
