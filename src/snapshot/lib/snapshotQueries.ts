@@ -111,7 +111,7 @@ export class SnapshotQueries {
           }`,
         },
       })
-      return result.data.proposal
+      return result.data.data.proposal
     } catch (err) {
       return err
     }
