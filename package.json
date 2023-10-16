@@ -45,8 +45,13 @@
   },
   "dependencies": {
     "@alch/alchemy-sdk": "^1.2.0",
+    "@biconomy/account": "^3.1.0",
+    "@biconomy/bundler": "^3.1.0",
     "@biconomy/common": "^2.0.2",
     "@biconomy/core-types": "^2.0.2",
+    "@biconomy/mexa": "^2.0.38",
+    "@biconomy/modules": "^3.1.0",
+    "@biconomy/paymaster": "^3.1.0",
     "@biconomy/smart-account": "^2.0.2",
     "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@ethersproject/constants": "^5.6.1",

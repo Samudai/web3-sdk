@@ -1,8 +1,10 @@
 export const LIGHTHOUSE_TOKEN = "02d70763.26a4121018614b60b6aee4499e5fb525";
-export const PVT_KEY = "827ead3af1fe623e22e2d805c2c72cbe2701c4971f351c30d4e0302b8f11c04f";
-export const RPC_URL = 'https://goerli.infura.io/v3/a87b540865194fbeb48637aed1e122e2';
-export const PROXY_CONTRACT_ADDRESS = "0x6F581A889f7C0B613a87Bf01c83ad3A309e3a8b5";
-export const ENS_DOMAIN_NAME = "samudaitest.eth";
+export const PVT_KEY = "112f70840b01251f62a37e7be943dcdaca0601fd5c6499af15ed9c40b7690151";
+export const MAINNET_RPC_URL = 'https://mainnet.infura.io/v3/fd7b0732ea0f457f8113c36482bff83e';
+export const GOERLI_RPC_URL = "https://goerli.infura.io/v3/fd7b0732ea0f457f8113c36482bff83e";
+export const PROXY_CONTRACT_ADDRESS = "0x54E7069E36767F637141567cCE3ad689D9B3f678";
+export const ENS_DOMAIN_NAME = "venkatesh.eth";
+export const OWNER_ADDRESS = "0x517fF00d27eFE58a73969466c19af7C956066d36";
 
 // FUSES
 export const CANNOT_UNWRAP = 1;
@@ -25,7 +27,3 @@ export const USER_SETTABLE_FUSES = 0xFFFDFFFF;
 export const ETHEREUM_MAINNET_RESOLVER = "0x7759277C7E6c34230840c4C28d799fBb643CB23f";
 export const GOERLI_RESOLVER = "0x59c227Bac76bB479FbD51e12032fDDD7179aBf9F";
 
-
-
-
-// https://app.samudai.xyz/redirect?id=<MEMBER_ID>
