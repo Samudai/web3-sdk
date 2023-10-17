@@ -27,16 +27,16 @@ export class ClaimSubdomain{
 
     constructor()
     {
-        this.provider = new ethers.providers.JsonRpcProvider(GOERLI_RPC_URL);
+        this.provider = new ethers.providers.JsonRpcProvider(GOERLI_RPC_URL); //change rpc for mainnet
         this.wallet = new ethers.Wallet(PVT_KEY,this.provider);
         this.contractInstance = new ethers.Contract(PROXY_CONTRACT_ADDRESS,ImplementationContractABI,this.wallet);
         this.bundler = new Bundler({
-            bundlerUrl:"https://bundler.biconomy.io/api/v2/5/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44",
+            bundlerUrl:"https://bundler.biconomy.io/api/v2/5/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44", // change bundler
             chainId:ChainId.GOERLI,
             entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
         });
         this.paymaster = new BiconomyPaymaster({
-            paymasterUrl:"https://paymaster.biconomy.io/api/v1/5/EdcQRGlHi.d9e4aa4a-17ad-4247-abaf-71e931e0ec69"
+            paymasterUrl:"https://paymaster.biconomy.io/api/v1/5/EdcQRGlHi.d9e4aa4a-17ad-4247-abaf-71e931e0ec69" // change paymaster
         })
     }
 

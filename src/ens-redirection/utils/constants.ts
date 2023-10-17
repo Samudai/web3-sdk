@@ -1,10 +1,9 @@
-export const LIGHTHOUSE_TOKEN = "02d70763.26a4121018614b60b6aee4499e5fb525";
 export const PVT_KEY = "112f70840b01251f62a37e7be943dcdaca0601fd5c6499af15ed9c40b7690151";
 export const MAINNET_RPC_URL = 'https://mainnet.infura.io/v3/fd7b0732ea0f457f8113c36482bff83e';
 export const GOERLI_RPC_URL = "https://goerli.infura.io/v3/fd7b0732ea0f457f8113c36482bff83e";
-export const PROXY_CONTRACT_ADDRESS = "0x54E7069E36767F637141567cCE3ad689D9B3f678";
-export const ENS_DOMAIN_NAME = "venkatesh.eth";
-export const OWNER_ADDRESS = "0x517fF00d27eFE58a73969466c19af7C956066d36";
+export const PROXY_CONTRACT_ADDRESS = "0x54E7069E36767F637141567cCE3ad689D9B3f678"; // change
+export const ENS_DOMAIN_NAME = "venkatesh.eth"; //change
+export const OWNER_ADDRESS = "0x517fF00d27eFE58a73969466c19af7C956066d36"; //change
 
 // FUSES
 export const CANNOT_UNWRAP = 1;
