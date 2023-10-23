@@ -4,11 +4,9 @@ import {
   CANNOT_UNWRAP,
   CAN_EXTEND_EXPIRY,
   ENS_DOMAIN_NAME,
-  ETHEREUM_MAINNET_RESOLVER,
-  MAINNET_RPC_URL,
-  OWNER_ADDRESS,
+  GOERLI,
+  MAINNET,
   PARENT_CANNOT_CONTROL,
-  PROXY_CONTRACT_ADDRESS,
   PVT_KEY,
 } from '../utils/constants'
 import { ImplementationContractABI } from '../contracts/Contract_ABI'
@@ -43,22 +41,20 @@ export class ClaimSubdomain {
   private paymaster: IPaymaster
 
   constructor() {
-    this.provider = new ethers.providers.JsonRpcProvider(MAINNET_RPC_URL)
+    this.provider = new ethers.providers.JsonRpcProvider(MAINNET.RPC_URL)
     this.wallet = new ethers.Wallet(PVT_KEY, this.provider)
     this.contractInstance = new ethers.Contract(
-      PROXY_CONTRACT_ADDRESS,
+      MAINNET.PROXY_CONTRACT_ADDRESS,
       ImplementationContractABI,
       this.wallet
     )
     this.bundler = new Bundler({
-      bundlerUrl:
-        'https://bundler.biconomy.io/api/v2/1/hjJ79w0.jkL90oYh-iJkl-45ic-jdS9-nj789sb78Cv',
+      bundlerUrl: MAINNET.BUNDLER_URL,
       chainId: ChainId.MAINNET,
       entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
     })
     this.paymaster = new BiconomyPaymaster({
-      paymasterUrl:
-        'https://paymaster.biconomy.io/api/v1/1/h8EwFOKGW.b97fed01-8bb9-42f5-932a-8137a995516a',
+      paymasterUrl: MAINNET.PAYMASTER_URL,
     })
   }
 
@@ -126,11 +122,11 @@ export class ClaimSubdomain {
             subname,
             cidHash,
             fuses,
-            ETHEREUM_MAINNET_RESOLVER,
+            MAINNET.RESOLVER,
             ownerAddress
           )
         const tx = {
-          to: PROXY_CONTRACT_ADDRESS,
+          to: MAINNET.PROXY_CONTRACT_ADDRESS,
           data: minTx.data,
         }
         const userOp = await smartAccount.buildUserOp([tx])

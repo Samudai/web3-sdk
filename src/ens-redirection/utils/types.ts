@@ -1,4 +1,4 @@
 export type transaction = {
-    transactionHash: string | null
-    success: boolean | null
-};
+  transactionHash: string | null
+  success: boolean | null
+}
