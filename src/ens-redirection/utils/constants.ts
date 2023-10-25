@@ -1,6 +1,6 @@
 export const PVT_KEY =
   '112f70840b01251f62a37e7be943dcdaca0601fd5c6499af15ed9c40b7690151'
-export const ENS_DOMAIN_NAME = 'venkateshsv.eth' //change
+export const ENS_DOMAIN_NAME = 'samudai.eth'
 
 export const GOERLI = {
   RESOLVER: '0x59c227Bac76bB479FbD51e12032fDDD7179aBf9F',
