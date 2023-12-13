@@ -1,26 +1,21 @@
-import { ethers } from 'ethers'
+import { Transaction, ethers } from 'ethers'
 import { Provider, Web3Provider } from '@ethersproject/providers'
-import {
-  EthSignSignature,
-} from '@gnosis.pm/safe-core-sdk'
+import { EthSignSignature } from '@gnosis.pm/safe-core-sdk'
 import Safe, { EthersAdapter } from '@safe-global/protocol-kit'
 import axios from 'axios'
 import { Networks } from '../utils/networks'
 import { SafeTransactionOptionalProps } from '@safe-global/protocol-kit'
-import { 
-  SafeTransactionDataPartial, 
-  MetaTransactionData, 
-  SafeMultisigTransactionResponse, 
-  SafeSignature, 
-  SafeTransactionData
-} from '@safe-global/safe-core-sdk-types'
 import {
-  SafeBalanceUsdResponse,
-} from '@gnosis.pm/safe-service-client'
-import SafeApiKit, 
-{ 
-  SafeMultisigTransactionListResponse, 
-  SafeInfoResponse, 
+  SafeTransactionDataPartial,
+  MetaTransactionData,
+  SafeMultisigTransactionResponse,
+  SafeSignature,
+  SafeTransactionData,
+} from '@safe-global/safe-core-sdk-types'
+import { SafeBalanceUsdResponse } from '@gnosis.pm/safe-service-client'
+import SafeApiKit, {
+  SafeMultisigTransactionListResponse,
+  SafeInfoResponse,
   SignatureResponse,
 } from '@safe-global/api-kit'
 import {
@@ -54,42 +49,42 @@ export class Gnosis {
     })
   }
 
-  private generateBatchTransaction = (
-    value: string,
-    receiverAddresses: string[],
-    tokenAddress?: string
-  ): MetaTransactionData[] => {
-    const transactions: MetaTransactionData[] = []
+  // private generateBatchTransaction = (
+  //   value: string,
+  //   receiverAddresses: string[],
+  //   tokenAddress?: string
+  // ): MetaTransactionData[] => {
+  //   const transactions: MetaTransactionData[] = []
 
-    const receiverValue: number = parseInt(value) / receiverAddresses.length
+  //   const receiverValue: number = parseInt(value) / receiverAddresses.length
 
-    if (tokenAddress) {
-      receiverAddresses.map((receiverAddress) => {
-        const encodedData = encodeData(
-          ethers.utils.getAddress(receiverAddress),
-          receiverValue.toString()
-        )
+  //   if (tokenAddress) {
+  //     receiverAddresses.map((receiverAddress) => {
+  //       const encodedData = encodeData(
+  //         ethers.utils.getAddress(receiverAddress),
+  //         receiverValue.toString()
+  //       )
 
-        transactions.push({
-          to: ethers.utils.getAddress(tokenAddress),
-          value: '0',
-          data: encodedData,
-          operation: 0,
-        })
-      })
-    } else {
-      receiverAddresses.map((receiverAddress) => {
-        transactions.push({
-          to: receiverAddress,
-          value: receiverValue.toString(),
-          data: '0x',
-          operation: 0,
-        })
-      })
-    }
+  //       transactions.push({
+  //         to: ethers.utils.getAddress(tokenAddress),
+  //         value: '0',
+  //         data: encodedData,
+  //         operation: 0,
+  //       })
+  //     })
+  //   } else {
+  //     receiverAddresses.map((receiverAddress) => {
+  //       transactions.push({
+  //         to: receiverAddress,
+  //         value: receiverValue.toString(),
+  //         data: '0x',
+  //         operation: 0,
+  //       })
+  //     })
+  //   }
 
-    return transactions
-  }
+  //   return transactions
+  // }
 
   private generateCustomERC20Transaction = (
     receiverAddress: string,
@@ -181,7 +176,9 @@ export class Gnosis {
           nonce: nonce,
         }
 
-        const safeTransaction = await safeSDK.createTransaction({safeTransactionData})
+        const safeTransaction = await safeSDK.createTransaction({
+          safeTransactionData,
+        })
 
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
@@ -210,12 +207,80 @@ export class Gnosis {
     }
   }
 
-  createBatchGnosisTx = async (
+  // createBatchGnosisTx = async (
+  //   safeAddress: string,
+  //   receiverAddresses: string[],
+  //   value: string,
+  //   senderAddress: string,
+  //   tokenAddress?: string
+  // ): Promise<SafeTransactionResponse> => {
+  //   try {
+  //     this.safeAddress = ethers.utils.getAddress(safeAddress)
+
+  //     if (this.provider) {
+  //       const safeOwner = await this.provider.getSigner(0)
+
+  //       this.etherAdapter = new EthersAdapter({
+  //         ethers: ethers,
+  //         signerOrProvider: safeOwner,
+  //       })
+
+  //       const safeService = new SafeApiKit({
+  //         txServiceUrl: this.txServiceUrl,
+  //         ethAdapter: this.etherAdapter,
+  //       })
+
+  //       const safeSDK = await Safe.create({
+  //         ethAdapter: this.etherAdapter,
+  //         safeAddress: this.safeAddress,
+  //       })
+
+  //       const nonce = await safeService.getNextNonce(this.safeAddress)
+
+  //       const safeTransactionData: MetaTransactionData[] =
+  //         this.generateBatchTransaction(value, receiverAddresses, tokenAddress)
+
+  //       const options: SafeTransactionOptionalProps = {
+  //         nonce, // Optional
+  //       }
+
+  //       const safeTransaction = await safeSDK.createTransaction({
+  //         safeTransactionData,
+  //         onlyCalls: true,
+  //         options,
+  //       })
+
+  //       const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
+
+  //       const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
+
+  //       const result = await safeService.proposeTransaction({
+  //         safeAddress: this.safeAddress,
+  //         safeTransactionData: safeTransaction.data,
+  //         safeTxHash,
+  //         senderAddress: ethers.utils.getAddress(senderAddress),
+  //         senderSignature: senderSignature.data,
+  //         origin: 'Samudai Platform',
+  //       })
+
+  //       const data: SafeTransactionResponse = {
+  //         safeTxHash: safeTxHash,
+  //         proposedSafeTx: result,
+  //       }
+
+  //       return data
+  //     } else {
+  //       throw new Error('Provider not found')
+  //     }
+  //   } catch (err: any) {
+  //     throw err
+  //   }
+  // }
+
+  createBatchTx = async (
+    transactions: MetaTransactionData[],
     safeAddress: string,
-    receiverAddresses: string[],
-    value: string,
-    senderAddress: string,
-    tokenAddress?: string
+    senderAddress: string
   ): Promise<SafeTransactionResponse> => {
     try {
       this.safeAddress = ethers.utils.getAddress(safeAddress)
@@ -240,15 +305,16 @@ export class Gnosis {
 
         const nonce = await safeService.getNextNonce(this.safeAddress)
 
-        const safeTransactionData: MetaTransactionData[] =
-          this.generateBatchTransaction(value, receiverAddresses, tokenAddress)
-
         const options: SafeTransactionOptionalProps = {
-          nonce // Optional
+          nonce: nonce,
         }
 
-        const safeTransaction = await safeSDK.createTransaction({ safeTransactionData, options })
-
+        const safeTransaction = await safeSDK.createTransaction({
+          safeTransactionData: transactions,
+          onlyCalls: true,
+          options,
+        })
+        console.log('safeTransaction', safeTransaction)
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
         const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
@@ -271,8 +337,8 @@ export class Gnosis {
       } else {
         throw new Error('Provider not found')
       }
-    } catch (err: any) {
-      throw err
+    } catch (error: any) {
+      throw error
     }
   }
 
@@ -567,7 +633,7 @@ export class Gnosis {
         }
 
         const safeTransaction = await safeSDK.createTransaction({
-          safeTransactionData
+          safeTransactionData,
         })
 
         transaction.confirmations!.forEach((confirmation) => {
@@ -700,7 +766,10 @@ export class Gnosis {
           nonce, // Optional
         }
 
-        const safeTransaction = await safeSDK.createTransaction({ safeTransactionData , options})
+        const safeTransaction = await safeSDK.createTransaction({
+          safeTransactionData,
+          options,
+        })
 
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
