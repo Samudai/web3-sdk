@@ -26,6 +26,7 @@ import {
   SafeTransactions,
   TransactionDetails,
   UserSafe,
+  SafeBalanceUsdResponsePortal,
 } from '../utils/types'
 import { encodeData, getDecimalsForToken } from '../lib/helpers'
 
@@ -395,7 +396,7 @@ export class Gnosis {
   getRecentTransactions = async (safeAddress: string) => {
     try {
       const res = await axios.get(
-        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/all-transactions/?limit=20&executed=false&queued=true&trusted=true`
+        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/all-transactions/?limit=40&executed=false&queued=true&trusted=true`
       )
 
       return res.data
@@ -701,14 +702,30 @@ export class Gnosis {
     }
   }
 
+  // Reminder to change the api url before pushing to dev
   getSafeBalance = async (
     safeAddress: string
   ): Promise<SafeBalanceUsdResponse[]> => {
     try {
       const result = await axios.get(
-        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/balances/usd/?trusted=false&exclude_spam=false`
+        `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/balances/usd/?trusted=false&exclude_spam=false`
       )
       const balance: SafeBalanceUsdResponse[] = result.data
+      return balance
+    } catch (err) {
+      throw err
+    }
+  }
+  // Reminder to change the api url before pushing to dev
+
+  getSafeBalanceinUSD = async (
+    safeAddress: string
+  ): Promise<SafeBalanceUsdResponsePortal[]> => {
+    try {
+      const result = await axios.get(
+        `https://api.portals.fi/v2/account?owner=0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1&networks=ethereum`
+      )
+      const balance: SafeBalanceUsdResponsePortal[] = result.data
       return balance
     } catch (err) {
       throw err

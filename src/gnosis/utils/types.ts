@@ -44,6 +44,7 @@ export type SafeTransactionTemplate = {
 export type ErrorResponse = {
   message: string
   error: string
+  safeTxHash?: string
 }
 
 export type SafeTransactionResponse = {
@@ -90,6 +91,24 @@ export type MultisigTransactionResponse = {
   confirmations: MultisigConfirmations[]
   trusted: boolean
   signatures: string
+}
+
+export type SafeBalanceUsdResponsePortal = {
+  key: string
+  name: string
+  decimals: number
+  symbol: string
+  price: number
+  address: string
+  network: string
+  updatedAt: string
+  createdAt: string
+  liquidity: number
+  image: string
+  tokenId: string
+  balanceUSD: number
+  balance: number
+  rawBalance: string
 }
 
 export type MultisigConfirmations = {
