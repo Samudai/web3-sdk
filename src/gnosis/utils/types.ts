@@ -151,3 +151,50 @@ export type TransactionDetails = {
   safeMultisigTransactionResponse: SafeMultisigTransactionResponse
   confirmation: number
 }
+
+export enum TransactionType {
+  'BATCH' = 'BATCH',
+  'SINGLE' = 'SINGLE',
+  'REJECTION' = 'REJECTION',
+  'RECEIVED' = 'RECEIVED',
+  'OTHER' = 'OTHER',
+}
+export type TxDetails = {
+  walletAddress: string
+  currency: string
+  amount: number
+  logo: string
+  amountUSD: number
+}
+
+export type TxObject = {
+  nonce: number
+  type: TransactionType //batch
+  date: string
+  amountUSD: number
+  transactionDetails: TxDetails[]
+  confirmationsRequired: number
+  confirmations: string[] // array of owners
+  safeTxHash: string
+}
+
+export type TxHistoryDetails = {
+  from: string
+  walletAddress: string
+  currency: string
+  amount: number
+  logo: string
+  amountUSD: number
+}
+
+export type TxHistoryObject = {
+  nonce: number
+  type: TransactionType //batch
+  executionDate: string
+  amountUSD: number
+  transactionDetails: TxHistoryDetails[]
+  executedBy: string
+  safeTxHash: string
+  txHash: string
+  url: string
+}

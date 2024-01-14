@@ -592,7 +592,56 @@ export class Gnosis {
       throw err
     }
   }
+  rejectTransaction = async (
+    safeAddress: string,
+    nonce: number,
+    senderAddress: string
+  ): Promise<SafeTransactionResponse> => {
+    try {
+      if (this.provider) {
+        this.safeAddress = ethers.utils.getAddress(safeAddress)
+        const safeOwner = await this.provider.getSigner(0)
+        this.etherAdapter = new EthersAdapter({
+          ethers: ethers,
+          signerOrProvider: safeOwner,
+        })
 
+        const safeService = new SafeApiKit({
+          txServiceUrl: this.txServiceUrl,
+          ethAdapter: this.etherAdapter,
+        })
+
+        const safeSDK = await Safe.create({
+          ethAdapter: this.etherAdapter,
+          safeAddress: this.safeAddress,
+        })
+
+        const safeTransaction = await safeSDK.createRejectionTransaction(nonce)
+        const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
+
+        const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
+
+        const result = await safeService.proposeTransaction({
+          safeAddress: this.safeAddress,
+          safeTransactionData: safeTransaction.data,
+          safeTxHash,
+          senderAddress: ethers.utils.getAddress(senderAddress),
+          senderSignature: senderSignature.data,
+          origin: 'Samudai Platform',
+        })
+        const data: SafeTransactionResponse = {
+          safeTxHash: safeTxHash,
+          proposedSafeTx: result,
+        }
+
+        return data
+      } else {
+        throw new Error('Provider not found')
+      }
+    } catch (error) {
+      throw error
+    }
+  }
   executeTransaction = async (
     safeTxHash: string,
     safeAddress: string
