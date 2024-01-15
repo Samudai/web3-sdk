@@ -152,9 +152,13 @@ export type TransactionDetails = {
   confirmation: number
 }
 
-export enum TransactionType {
+export enum TransactionNature {
   'BATCH' = 'BATCH',
   'SINGLE' = 'SINGLE',
+  'OTHER' = 'OTHER',
+}
+export enum TransactionType {
+  'SENT' = 'SENT',
   'REJECTION' = 'REJECTION',
   'RECEIVED' = 'RECEIVED',
   'OTHER' = 'OTHER',
@@ -170,6 +174,7 @@ export type TxDetails = {
 export type TxObject = {
   nonce: number
   type: TransactionType //batch
+  nature: TransactionNature
   date: string
   amountUSD: number
   transactionDetails: TxDetails[]
@@ -190,6 +195,7 @@ export type TxHistoryDetails = {
 export type TxHistoryObject = {
   nonce: number
   type: TransactionType //batch
+  nature: TransactionNature
   executionDate: string
   amountUSD: number
   transactionDetails: TxHistoryDetails[]

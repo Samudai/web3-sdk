@@ -10,6 +10,7 @@ import {
   SafeBalanceUsdResponsePortal,
   TxDetails,
   TransactionType,
+  TransactionNature,
 } from '../../gnosis/utils/types'
 import axios from 'axios'
 import {
@@ -141,6 +142,7 @@ export class GnosisFetch {
     try {
       const result = await axios.get(
         `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/balances/usd/?trusted=false&exclude_spam=false`
+        // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/balances/usd/?trusted=false&exclude_spam=false`
       )
       const balance: SafeBalanceUsdResponse[] = result.data
       return balance
@@ -224,6 +226,7 @@ export class GnosisFetch {
     try {
       const res = await axios.get(
         `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/all-transactions/?executed=false&queued=true&trusted=true`
+        // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/all-transactions/?executed=false&queued=true&trusted=true`
       )
       let token_map = await this.getTokenMap()
       let queueTransaction: TxObject[] = []
@@ -233,7 +236,8 @@ export class GnosisFetch {
         const confirmation: string[] = []
         const transaction: TxObject = {
           nonce: 0,
-          type: TransactionType.SINGLE,
+          type: TransactionType.OTHER,
+          nature: TransactionNature.OTHER,
           date: '',
           amountUSD: 0,
           transactionDetails: transactionDetails,
@@ -265,6 +269,8 @@ export class GnosisFetch {
                 logo: '',
                 amountUSD: 0,
               }
+              transaction.type = TransactionType.SENT
+              transaction.nature = TransactionNature.SINGLE
               transactionDetailsTemp.walletAddress =
                 item?.dataDecoded?.parameters?.[0]?.value
               const tokenDetails = token_map?.get(item?.to.toLowerCase())
@@ -290,6 +296,8 @@ export class GnosisFetch {
                 logo: '',
                 amountUSD: 0,
               }
+              transaction.type = TransactionType.SENT
+              transaction.nature = TransactionNature.SINGLE
               transactionDetailsTemp.walletAddress = item?.to
               const tokenDetails = token_map?.get(
                 '0x0000000000000000000000000000000000000000'
@@ -308,7 +316,8 @@ export class GnosisFetch {
               transactionDetailsTemp.logo = tokenDetails.logoUri
               transaction.transactionDetails.push(transactionDetailsTemp)
             } else if (item?.dataDecoded?.method === 'multiSend') {
-              transaction.type = TransactionType.BATCH
+              transaction.type = TransactionType.SENT
+              transaction.nature = TransactionNature.BATCH
               item?.dataDecoded?.parameters[0]?.valueDecoded?.map((tx: any) => {
                 // console.log('TXSDK: ', tx)
                 if (tx.data === null && tx.value != null) {
@@ -365,6 +374,7 @@ export class GnosisFetch {
                 }
               })
             } else {
+              transaction.nature = TransactionNature.OTHER
               transaction.type = TransactionType.OTHER
             }
           }
@@ -381,6 +391,7 @@ export class GnosisFetch {
     try {
       const res = await axios.get(
         `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/all-transactions/?executed=true&queued=false&trusted=true`
+        // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/all-transactions/?executed=true&queued=false&trusted=true`
       )
       let token_map = await this.getTokenMap()
       let historyTransaction: TxHistoryObject[] = []
@@ -390,6 +401,7 @@ export class GnosisFetch {
         const transaction: TxHistoryObject = {
           nonce: -1,
           type: TransactionType.OTHER,
+          nature: TransactionNature.OTHER,
           executionDate: '',
           amountUSD: 0,
           transactionDetails: transactionDetails,
@@ -404,6 +416,13 @@ export class GnosisFetch {
           transaction.txHash = item?.txHash
           transaction.type = TransactionType.RECEIVED
           transaction.url = txURL + item?.txHash
+          if (item?.transfers?.length > 1) {
+            transaction.nature = TransactionNature.BATCH
+          } else if (item?.transfers?.length === 1) {
+            transaction.nature = TransactionNature.SINGLE
+          } else {
+            transaction.nature = TransactionNature.OTHER
+          }
           if (item?.transfers?.length > 0) {
             item?.transfers.map((tx: any) => {
               let transactionDetailsTemp: TxHistoryDetails = {
@@ -469,7 +488,8 @@ export class GnosisFetch {
           transaction.executedBy = item?.executor
           // single
           if (item?.transfers?.length === 1) {
-            transaction.type = TransactionType.SINGLE
+            transaction.nature = TransactionNature.SINGLE
+            transaction.type = TransactionType.SENT
             let transactionDetailsTemp: TxHistoryDetails = {
               from: '',
               walletAddress: '',
@@ -521,7 +541,8 @@ export class GnosisFetch {
             item?.transfers?.length > 1 &&
             item?.dataDecoded?.method === 'multiSend'
           ) {
-            transaction.type = TransactionType.BATCH
+            transaction.nature = TransactionNature.BATCH
+            transaction.type = TransactionType.SENT
             item?.transfers.map((tx: any) => {
               let transactionDetailsTemp: TxHistoryDetails = {
                 from: '',
@@ -578,10 +599,12 @@ export class GnosisFetch {
             item?.data === null &&
             item?.value === '0'
           ) {
+            transaction.nature = TransactionNature.OTHER
             transaction.type = TransactionType.REJECTION
           }
         } else {
           // OTHERS
+          transaction.nature = TransactionNature.OTHER
           transaction.type = TransactionType.OTHER
         }
 
