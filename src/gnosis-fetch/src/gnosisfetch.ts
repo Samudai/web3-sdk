@@ -256,7 +256,11 @@ export class GnosisFetch {
             transaction.safeTxHash = item?.safeTxHash
             transaction.nonce = item?.nonce
             transaction.date = item?.submissionDate
-            transaction.confirmations = item?.confirmations
+            // transaction.confirmations = item?.confirmations
+            item?.confirmations.map((ownerObject: any) => {
+              confirmation.push(ownerObject.owner)
+            })
+            transaction.confirmations = confirmation
             transaction.confirmationsRequired = item?.confirmationsRequired
 
             if (item?.data === null && item?.value === '0') {
