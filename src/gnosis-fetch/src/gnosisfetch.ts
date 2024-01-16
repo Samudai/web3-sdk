@@ -121,7 +121,7 @@ export class GnosisFetch {
     try {
       const owners: string[] = []
       const result = await axios.get(
-        `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/`
+        `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/`
       )
       const safeOwners = result.data.owners
       for (const owner of safeOwners) {
@@ -141,7 +141,7 @@ export class GnosisFetch {
   getSafeBalance = async (): Promise<SafeBalanceUsdResponse[]> => {
     try {
       const result = await axios.get(
-        `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/balances/usd/?trusted=false&exclude_spam=false`
+        `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/balances/usd/?trusted=false&exclude_spam=false`
         // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/balances/usd/?trusted=false&exclude_spam=false`
       )
       const balance: SafeBalanceUsdResponse[] = result.data
@@ -153,7 +153,7 @@ export class GnosisFetch {
   getSafeBalanceinUSD = async (): Promise<SafeBalanceUsdResponsePortal[]> => {
     try {
       const result = await axios.get(
-        `https://api.portals.fi/v2/account?owner=0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1&networks=ethereum`
+        `https://api.portals.fi/v2/account?owner=${this.safeAddress}&networks=ethereum`
       )
       const balance: SafeBalanceUsdResponsePortal[] = result.data.balances
       return balance
@@ -225,7 +225,7 @@ export class GnosisFetch {
   getQueuedPayments = async (): Promise<TxObject[]> => {
     try {
       const res = await axios.get(
-        `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/all-transactions/?executed=false&queued=true&trusted=true`
+        `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/all-transactions/?executed=false&queued=true&trusted=true`
         // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/all-transactions/?executed=false&queued=true&trusted=true`
       )
       let token_map = await this.getTokenMap()
@@ -394,7 +394,7 @@ export class GnosisFetch {
   getTransactionHistory = async (): Promise<TxHistoryObject[]> => {
     try {
       const res = await axios.get(
-        `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/all-transactions/?executed=true&queued=false&trusted=true`
+        `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/all-transactions/?executed=true&queued=false&trusted=true`
         // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/all-transactions/?executed=true&queued=false&trusted=true`
       )
       let token_map = await this.getTokenMap()

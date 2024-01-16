@@ -757,7 +757,7 @@ export class Gnosis {
   ): Promise<SafeBalanceUsdResponse[]> => {
     try {
       const result = await axios.get(
-        `https://safe-transaction-mainnet.safe.global/api/v1/safes/0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1/balances/usd/?trusted=false&exclude_spam=false`
+        `${this.txServiceUrl}/api/v1/safes/${safeAddress}/balances/usd/?trusted=false&exclude_spam=false`
         // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/balances/usd/?trusted=false&exclude_spam=false`
       )
       const balance: SafeBalanceUsdResponse[] = result.data
@@ -773,7 +773,7 @@ export class Gnosis {
   ): Promise<SafeBalanceUsdResponsePortal[]> => {
     try {
       const result = await axios.get(
-        `https://api.portals.fi/v2/account?owner=0x8ea48034a0d50ed8321083Fe66EB7942935e4Ec1&networks=ethereum`
+        `https://api.portals.fi/v2/account?owner=${safeAddress}&networks=ethereum`
       )
       const balance: SafeBalanceUsdResponsePortal[] = result.data
       return balance
