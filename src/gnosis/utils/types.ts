@@ -204,3 +204,9 @@ export type TxHistoryObject = {
   txHash: string
   url: string
 }
+
+export type WidgetBalance = {
+  symbol: string
+  balance: number
+  usdValue: number
+}

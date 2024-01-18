@@ -11,6 +11,7 @@ import {
   TxDetails,
   TransactionType,
   TransactionNature,
+  WidgetBalance,
 } from '../../gnosis/utils/types'
 import axios from 'axios'
 import {
@@ -152,13 +153,104 @@ export class GnosisFetch {
   }
   getSafeBalanceinUSD = async (): Promise<SafeBalanceUsdResponsePortal[]> => {
     try {
-      const result = await axios.get(
-        `https://api.portals.fi/v2/account?owner=${this.safeAddress}&networks=ethereum`
-      )
-      const balance: SafeBalanceUsdResponsePortal[] = result.data.balances
+      // const result = await axios.get(
+      //   `https://api.portals.fi/v2/account?owner=${this.safeAddress}&networks=ethereum`,
+      //   {
+      //     headers: {
+      //       Authorization: 'Bearer 8c182698-36a3-4e89-8fb7-bb476148235c',
+      //       'Access-Control-Allow-Origin': '*',
+      //     },
+      //   }
+      // )
+      // const balance: SafeBalanceUsdResponsePortal[] = result.data.balances
+      const balance: SafeBalanceUsdResponsePortal[] = []
       return balance
     } catch (err) {
       throw err
+    }
+  }
+  getWidgetTokenBalance = async () => {
+    try {
+      const tokenDetails: SafeBalanceUsdResponse[] = await this.getSafeBalance()
+      const tokenDetailsUSD: SafeBalanceUsdResponsePortal[] =
+        await this.getSafeBalanceinUSD()
+      const token_map = new Map()
+      if (tokenDetails.length > 0) {
+        for (let token = 0; token < tokenDetails.length; token++) {
+          const token_item = {
+            address: '',
+            decimals: 0,
+            logoUri: '', //logo url
+            name: '',
+            symbol: '',
+            type: '',
+            usd: 0,
+            balance: 0,
+          }
+          if (
+            tokenDetails[token].token === null &&
+            tokenDetails[token].balance !== null
+          ) {
+            token_item.address = '0x0000000000000000000000000000000000000000'
+            token_item.decimals = 18
+            token_item.symbol = 'ETH'
+            token_item.name = 'Ethereum'
+            token_item.balance = Number(
+              ethers.utils.formatUnits(
+                BigNumber.from(tokenDetails[token].balance),
+                18
+              )
+            )
+            token_map.set(
+              '0x0000000000000000000000000000000000000000',
+              token_item
+            )
+          } else if (tokenDetails[token].token !== null) {
+            token_item.address = tokenDetails[token].tokenAddress.toLowerCase()
+            token_item.decimals = tokenDetails[token].token.decimals
+            token_item.symbol = tokenDetails[token].token.symbol
+            token_item.name = tokenDetails[token].token.name
+            token_item.logoUri = tokenDetails[token].token.logoUri
+            token_item.balance = Number(
+              ethers.utils.formatUnits(
+                BigNumber.from(tokenDetails[token].balance),
+                tokenDetails[token].token.decimals
+              )
+            )
+            token_map.set(token_item.address, token_item)
+          } else {
+            return
+          }
+        }
+        if (tokenDetailsUSD.length > 0) {
+          for (let token = 0; token < tokenDetailsUSD.length; token++) {
+            const addr = tokenDetailsUSD[token].address
+            const token_item = token_map.get(addr)
+            token_item.usd = tokenDetailsUSD[token].price
+            if (token_item.logoUri === '') {
+              token_item.logoUri = tokenDetailsUSD[token].image
+            }
+            token_map.set(addr, token_item)
+          }
+        }
+        const widget: WidgetBalance[] = []
+        token_map.forEach((key: any, value: any) => {
+          const widgetItem: WidgetBalance = {
+            symbol: '',
+            balance: 0,
+            usdValue: 0,
+          }
+          widgetItem.balance = key.balance
+          widgetItem.symbol = key.symbol
+          widgetItem.usdValue = key.usd
+          widget.push(widgetItem)
+        })
+        return widget
+      } else {
+        throw new Error('No assets found for the corresponding wallet')
+      }
+    } catch (error) {
+      throw error
     }
   }
 
