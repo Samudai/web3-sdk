@@ -208,76 +208,6 @@ export class Gnosis {
     }
   }
 
-  // createBatchGnosisTx = async (
-  //   safeAddress: string,
-  //   receiverAddresses: string[],
-  //   value: string,
-  //   senderAddress: string,
-  //   tokenAddress?: string
-  // ): Promise<SafeTransactionResponse> => {
-  //   try {
-  //     this.safeAddress = ethers.utils.getAddress(safeAddress)
-
-  //     if (this.provider) {
-  //       const safeOwner = await this.provider.getSigner(0)
-
-  //       this.etherAdapter = new EthersAdapter({
-  //         ethers: ethers,
-  //         signerOrProvider: safeOwner,
-  //       })
-
-  //       const safeService = new SafeApiKit({
-  //         txServiceUrl: this.txServiceUrl,
-  //         ethAdapter: this.etherAdapter,
-  //       })
-
-  //       const safeSDK = await Safe.create({
-  //         ethAdapter: this.etherAdapter,
-  //         safeAddress: this.safeAddress,
-  //       })
-
-  //       const nonce = await safeService.getNextNonce(this.safeAddress)
-
-  //       const safeTransactionData: MetaTransactionData[] =
-  //         this.generateBatchTransaction(value, receiverAddresses, tokenAddress)
-
-  //       const options: SafeTransactionOptionalProps = {
-  //         nonce, // Optional
-  //       }
-
-  //       const safeTransaction = await safeSDK.createTransaction({
-  //         safeTransactionData,
-  //         onlyCalls: true,
-  //         options,
-  //       })
-
-  //       const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
-
-  //       const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
-
-  //       const result = await safeService.proposeTransaction({
-  //         safeAddress: this.safeAddress,
-  //         safeTransactionData: safeTransaction.data,
-  //         safeTxHash,
-  //         senderAddress: ethers.utils.getAddress(senderAddress),
-  //         senderSignature: senderSignature.data,
-  //         origin: 'Samudai Platform',
-  //       })
-
-  //       const data: SafeTransactionResponse = {
-  //         safeTxHash: safeTxHash,
-  //         proposedSafeTx: result,
-  //       }
-
-  //       return data
-  //     } else {
-  //       throw new Error('Provider not found')
-  //     }
-  //   } catch (err: any) {
-  //     throw err
-  //   }
-  // }
-
   createBatchTx = async (
     transactions: MetaTransactionData[],
     safeAddress: string,
@@ -309,13 +239,53 @@ export class Gnosis {
         const options: SafeTransactionOptionalProps = {
           nonce: nonce,
         }
-
+        const safeTransactionData: SafeTransactionDataPartial[] = []
+        await Promise.all(
+          transactions.map(async (tx: any) => {
+            if (tx?.tokenAddress === '') {
+              const safeTransactionDataItem: SafeTransactionDataPartial = {
+                to: '',
+                data: '',
+                value: '',
+              }
+              safeTransactionDataItem.to = ethers.utils.getAddress(tx.to)
+              safeTransactionDataItem.data = '0x'
+              safeTransactionDataItem.value = ethers.utils
+                .parseEther(tx.value)
+                .toString()
+              safeTransactionData.push(safeTransactionDataItem)
+            } else {
+              const safeTransactionDataItem: SafeTransactionDataPartial = {
+                to: '',
+                data: '',
+                value: '',
+              }
+              const decimals = await getDecimalsForToken(
+                this.chainId,
+                tx?.tokenAddress
+              )
+              const val = ethers.utils
+                .parseUnits(tx.value, decimals!)
+                .toString()
+              safeTransactionDataItem.value = '0'
+              const encodedCallData = encodeData(
+                ethers.utils.getAddress(tx.to),
+                val
+              )
+              safeTransactionDataItem.to = ethers.utils.getAddress(
+                tx?.tokenAddress
+              )
+              safeTransactionDataItem.data = encodedCallData
+              safeTransactionData.push(safeTransactionDataItem)
+            }
+          })
+        )
         const safeTransaction = await safeSDK.createTransaction({
-          safeTransactionData: transactions,
+          safeTransactionData: safeTransactionData,
           onlyCalls: true,
           options,
         })
-        console.log('safeTransaction', safeTransaction)
+
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
         const senderSignature = await safeSDK.signTransactionHash(safeTxHash)

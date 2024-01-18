@@ -153,17 +153,15 @@ export class GnosisFetch {
   }
   getSafeBalanceinUSD = async (): Promise<SafeBalanceUsdResponsePortal[]> => {
     try {
-      // const result = await axios.get(
-      //   `https://api.portals.fi/v2/account?owner=${this.safeAddress}&networks=ethereum`,
-      //   {
-      //     headers: {
-      //       Authorization: 'Bearer 8c182698-36a3-4e89-8fb7-bb476148235c',
-      //       'Access-Control-Allow-Origin': '*',
-      //     },
-      //   }
-      // )
-      // const balance: SafeBalanceUsdResponsePortal[] = result.data.balances
-      const balance: SafeBalanceUsdResponsePortal[] = []
+      const result = await axios.get(
+        `https://api.portals.fi/v2/account?owner=${this.safeAddress}&networks=ethereum`,
+        {
+          headers: {
+            Authorization: 'Bearer 8c182698-36a3-4e89-8fb7-bb476148235c',
+          },
+        }
+      )
+      const balance: SafeBalanceUsdResponsePortal[] = result.data.balances
       return balance
     } catch (err) {
       throw err
