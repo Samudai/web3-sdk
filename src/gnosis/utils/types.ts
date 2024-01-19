@@ -44,6 +44,7 @@ export type SafeTransactionTemplate = {
 export type ErrorResponse = {
   message: string
   error: string
+  safeTxHash?: string
 }
 
 export type SafeTransactionResponse = {
@@ -92,6 +93,24 @@ export type MultisigTransactionResponse = {
   signatures: string
 }
 
+export type SafeBalanceUsdResponsePortal = {
+  key: string
+  name: string
+  decimals: number
+  symbol: string
+  price: number
+  address: string
+  network: string
+  updatedAt: string
+  createdAt: string
+  liquidity: number
+  image: string
+  tokenId: string
+  balanceUSD: number
+  balance: number
+  rawBalance: string
+}
+
 export type MultisigConfirmations = {
   description: string
   owner: string
@@ -131,4 +150,63 @@ export type CustomERC20Token = {
 export type TransactionDetails = {
   safeMultisigTransactionResponse: SafeMultisigTransactionResponse
   confirmation: number
+}
+
+export enum TransactionNature {
+  'BATCH' = 'BATCH',
+  'SINGLE' = 'SINGLE',
+  'OTHER' = 'OTHER',
+}
+export enum TransactionType {
+  'SENT' = 'SENT',
+  'REJECTION' = 'REJECTION',
+  'RECEIVED' = 'RECEIVED',
+  'OTHER' = 'OTHER',
+}
+export type TxDetails = {
+  walletAddress: string
+  currency: string
+  amount: number
+  logo: string
+  amountUSD: number
+}
+
+export type TxObject = {
+  nonce: number
+  type: TransactionType //batch
+  nature: TransactionNature
+  date: string
+  amountUSD: number
+  transactionDetails: TxDetails[]
+  confirmationsRequired: number
+  confirmations: string[] // array of owners
+  safeTxHash: string
+}
+
+export type TxHistoryDetails = {
+  from: string
+  walletAddress: string
+  currency: string
+  amount: number
+  logo: string
+  amountUSD: number
+}
+
+export type TxHistoryObject = {
+  nonce: number
+  type: TransactionType //batch
+  nature: TransactionNature
+  executionDate: string
+  amountUSD: number
+  transactionDetails: TxHistoryDetails[]
+  executedBy: string
+  safeTxHash: string
+  txHash: string
+  url: string
+}
+
+export type WidgetBalance = {
+  symbol: string
+  balance: number
+  usdValue: number
 }
