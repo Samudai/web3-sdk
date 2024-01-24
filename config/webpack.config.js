@@ -1,4 +1,5 @@
 const path = require('path')
+const webpack = require('webpack')
 
 module.exports = {
   mode: 'production',
@@ -36,7 +37,15 @@ module.exports = {
       https: false,
       stream: false,
       crypto: false,
-      'crypto-browserify': require.resolve('crypto-browserify'), //if you want to use this module also don't forget npm i crypto-browserify
+      'crypto-browserify': require.resolve('crypto-browserify'),
+      'stream': require.resolve('stream-browserify'), // Fallback for 'stream'
+      'buffer': require.resolve('buffer/'), //if you want to use this module also don't forget npm i crypto-browserify
     },
   },
+  externalsPresets: { node: true },
+  plugins: [
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    }),
+  ],
 }
