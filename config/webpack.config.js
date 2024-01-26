@@ -38,14 +38,17 @@ module.exports = {
       stream: false,
       crypto: false,
       'crypto-browserify': require.resolve('crypto-browserify'),
-      'stream': require.resolve('stream-browserify'), // Fallback for 'stream'
-      'buffer': require.resolve('buffer/'), //if you want to use this module also don't forget npm i crypto-browserify
+      stream: require.resolve('stream-browserify'), // Fallback for 'stream'
+      buffer: require.resolve('buffer/'), //if you want to use this module also don't forget npm i crypto-browserify
     },
   },
   externalsPresets: { node: true },
   plugins: [
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
+    }),
+    new webpack.NormalModuleReplacementPlugin(/node:/, (resource) => {
+      resource.request = resource.request.replace(/^node:/, "");
     }),
   ],
 }

@@ -20,6 +20,9 @@ export class TokenGatingSDK {
       extraData: '',
     }
   }
+  test = () => {
+    console.log('TOKEN GATING WORKING')
+  }
   initialise = async (
     chain: string,
     contractAddress: string,
@@ -62,11 +65,11 @@ export class TokenGatingSDK {
         litNetwork: 'cayenne',
       })
       await client.connect()
-      const authSig = await LitJsSdk.checkAndSignAuthMessage({
-        chain: chain,
-        nonce: client.getLatestBlockhash()!,
-      })
-      console.log('AUTHSIG: ', authSig)
+      // const authSig = await LitJsSdk.checkAndSignAuthMessage({
+      //   chain: chain,
+      //   nonce: client.getLatestBlockhash()!,
+      // })
+      // console.log('AUTHSIG: ', authSig)
     } catch (error: any) {
       throw error
     }
