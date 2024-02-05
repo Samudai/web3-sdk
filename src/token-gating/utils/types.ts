@@ -6,6 +6,12 @@ export type RecourceId = {
   extraData: string
 }
 
+export type payloadObject = {
+  baseUrl: string
+  path: string
+  orgId: string
+}
+
 export type ErrorResponse = {
   message: string
   error: string

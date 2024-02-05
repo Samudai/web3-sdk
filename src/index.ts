@@ -21,3 +21,4 @@ export * as FarcasterTypes from './farcaster/utils/types'
 export * as TokenGatingType from './token-gating/utils/types'
 
 export * as GnosisNetworks from './gnosis/utils/networks'
+export * as TokenConditions from './token-gating/utils/tokenConditions'

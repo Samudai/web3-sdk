@@ -1,17 +1,16 @@
 import * as LitJsSdk from '@lit-protocol/lit-node-client'
 import { AccessControlConditions } from '@lit-protocol/types'
-import { RecourceId } from '../utils/types'
-import { TokenGatingType } from '../utils/enums'
-import {
-  getERC1155TokenGating,
-  getERC20TokenGating,
-  getERC721TokenGating,
-} from '../utils/tokenConditions'
+import { RecourceId, payloadObject } from '../utils/types'
+import { getAccessControls } from '../utils/tokenConditions'
+import { Web3Provider } from '@ethersproject/providers'
+import { ethConnect } from '@lit-protocol/auth-browser'
 
 export class TokenGatingSDK {
-  accessControlConditions: AccessControlConditions[] = []
+  private provider: Web3Provider | null = null
+  private chainId: number
+  accessControlConditions: AccessControlConditions = []
   resourceId: RecourceId
-  constructor() {
+  constructor(provider: Web3Provider, chainId: number) {
     this.resourceId = {
       baseUrl: '',
       path: '',
@@ -19,58 +18,128 @@ export class TokenGatingSDK {
       role: '',
       extraData: '',
     }
+    this.provider = provider
+    this.chainId = chainId
   }
-  test = () => {
-    console.log('TOKEN GATING WORKING')
-  }
+
   initialise = async (
     chain: string,
-    contractAddress: string,
-    typeOfGating: TokenGatingType,
+    typeOfGating: string,
     baseUrl: string,
     path: string,
-    memberId: string,
-    tokenId?: string
-  ) => {
+    daoId: string,
+    contractAddress: string,
+    tokenId?: string,
+    value?: string
+  ): Promise<string> => {
     try {
-      if (typeOfGating === TokenGatingType.ERC20) {
-        this.accessControlConditions = getERC20TokenGating(
-          contractAddress,
-          chain
-        )
-      } else if (typeOfGating === TokenGatingType.ERC721) {
-        this.accessControlConditions = getERC721TokenGating(
-          contractAddress,
-          chain,
-          tokenId
-        )
-      } else if (typeOfGating === TokenGatingType.ERC1155) {
-        this.accessControlConditions = getERC1155TokenGating(
-          contractAddress,
-          chain,
-          tokenId
-        )
-      } else {
-        throw new Error('Invalid token gating type')
-      }
+      this.accessControlConditions = getAccessControls(
+        chain,
+        typeOfGating,
+        contractAddress,
+        tokenId,
+        value
+      )
+      const client = new LitJsSdk.LitNodeClient({
+        alertWhenUnauthorized: false,
+      })
+      await client.connect()
+      let walletAddress = await this.provider?.getSigner().getAddress()
+      walletAddress = walletAddress?.toLowerCase()
+      let expirationDate = new Date(Date.now() + 1000 * 60 * 60 * 24)
+      expirationDate.setDate(expirationDate.getDate() + 2)
+      const authSig = await ethConnect.signAndSaveAuthMessage({
+        web3: this.provider!,
+        account: walletAddress!,
+        chainId: this.chainId,
+        resources: '',
+        expiration: expirationDate.toISOString(),
+      })
       this.resourceId = {
         baseUrl: baseUrl,
         path: path,
-        orgId: '',
+        orgId: daoId,
         role: '',
-        extraData: memberId,
+        extraData: '',
       }
+      await client.saveSigningCondition({
+        accessControlConditions: this.accessControlConditions,
+        chain: chain,
+        authSig: authSig,
+        resourceId: this.resourceId,
+      })
+      const jwt = await client.getSignedToken({
+        accessControlConditions: this.accessControlConditions,
+        chain: chain,
+        authSig: authSig,
+        resourceId: this.resourceId,
+      })
+      return jwt
+    } catch (error: any) {
+      throw error
+    }
+  }
+
+  verifyLitAccess = async (
+    daoId: string,
+    data: any,
+    jwtData: any
+  ): Promise<boolean> => {
+    try {
       const client = new LitJsSdk.LitNodeClient({
         alertWhenUnauthorized: false,
-        litNetwork: 'cayenne',
       })
       await client.connect()
-      // const authSig = await LitJsSdk.checkAndSignAuthMessage({
-      //   chain: chain,
-      //   nonce: client.getLatestBlockhash()!,
-      // })
-      // console.log('AUTHSIG: ', authSig)
-    } catch (error: any) {
+
+      const accessControlConditionsData = data.data.accessControlConditions[0]
+      const accessControlConditions = [
+        {
+          contractAddress: accessControlConditionsData.contractAddress,
+          standardContractType:
+            accessControlConditionsData.standardContractType,
+          chain: accessControlConditionsData.chain,
+          method: accessControlConditionsData.method,
+          parameters: accessControlConditionsData.parameters,
+          returnValueTest: accessControlConditionsData.returnValueTest,
+        },
+      ]
+      const resourceId = data.data.resourceId
+      const chain = accessControlConditions[0].chain
+
+      console.log({ accessControlConditions, resourceId, chain })
+
+      let walletAddress = await this.provider?.getSigner().getAddress()
+      walletAddress = walletAddress?.toLowerCase()
+      let expirationDate = new Date(Date.now() + 1000 * 60 * 60 * 24)
+      expirationDate.setDate(expirationDate.getDate() + 2)
+      const authSig = await ethConnect.signAndSaveAuthMessage({
+        web3: this.provider!,
+        account: walletAddress!,
+        chainId: this.chainId,
+        resources: '',
+        expiration: expirationDate.toISOString(),
+      })
+      const jwt = await client.getSignedToken({
+        accessControlConditions: accessControlConditions,
+        chain: chain,
+        authSig,
+        resourceId: resourceId,
+      })
+
+      console.log(jwt)
+      const { verified, header, payload } = LitJsSdk.verifyJwt({ jwt })
+      let payloadTypecasted: payloadObject = payload as payloadObject
+      console.log('Payload: ', payloadTypecasted)
+      if (
+        payloadTypecasted.baseUrl === jwtData.baseUrl &&
+        payloadTypecasted.path === jwtData.path &&
+        payloadTypecasted.orgId === daoId
+      ) {
+        return true
+      } else {
+        return false
+      }
+    } catch (error) {
       throw error
     }
   }

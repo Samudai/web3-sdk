@@ -73,6 +73,7 @@ export class ClaimSubdomain {
         activeValidationModule: module,
       })
       console.log('address: ', await biconomySmartAccount.getAccountAddress())
+      // 0x50aCc8bE3A830649D4130f74B16E685F41922180
       return biconomySmartAccount
     } catch (error) {
       throw new Error('Error creating smart account.')
