@@ -33,7 +33,6 @@ export class GnosisFetch {
       }
     })
   }
-
   getExecutedTransactions = async (): Promise<SafeTransactions> => {
     try {
       if (this.safeAddress !== '') {
@@ -226,7 +225,11 @@ export class GnosisFetch {
             const token_item = token_map.get(addr)
             token_item.usd = tokenDetailsUSD[token].price
             if (token_item.logoUri === '') {
-              token_item.logoUri = tokenDetailsUSD[token].image
+              token_item.logoUri =
+                tokenDetailsUSD[token].image === undefined ||
+                tokenDetailsUSD[token].image === ''
+                  ? 'https://app.safe.global/images/common/token-placeholder.svg'
+                  : tokenDetailsUSD[token].image
             }
             token_map.set(addr, token_item)
           }
@@ -251,7 +254,49 @@ export class GnosisFetch {
       throw error
     }
   }
-
+  getTokenDetailsPortal = async (
+    tokenAddress: string,
+    token_map: Map<any, any>
+  ) => {
+    try {
+      if (token_map.has(tokenAddress) === false) {
+        const result = await axios.get(
+          `https://api.portals.fi/v2/tokens?addresses=ethereum%3A${tokenAddress}&platforms=basic&networks=ethereum&sortDirection=asc&limit=25&page=0`,
+          {
+            headers: {
+              Authorization: 'Bearer 8c182698-36a3-4e89-8fb7-bb476148235c',
+            },
+          }
+        )
+        const tokenDetails = result.data.tokens[0]
+        const token_item = {
+          address: '',
+          decimals: 0,
+          logoUri: '', //logo url
+          name: '',
+          symbol: '',
+          type: '',
+          usd: 0.0,
+        }
+        token_item.address = tokenDetails.address
+        token_item.decimals = tokenDetails.decimals
+        token_item.logoUri =
+          tokenDetails.image === undefined || tokenDetails.image === ''
+            ? 'https://app.safe.global/images/common/token-placeholder.svg'
+            : tokenDetails.image
+        token_item.name = tokenDetails.name
+        token_item.symbol = tokenDetails.symbol
+        token_item.usd = tokenDetails.price
+        token_map.set(tokenAddress, token_item)
+        return token_item
+      } else {
+        const tokenDetails = token_map.get(tokenAddress)
+        return tokenDetails
+      }
+    } catch (err) {
+      throw err
+    }
+  }
   getTokenMap = async () => {
     try {
       const tokenDetails: SafeBalanceUsdResponse[] = await this.getSafeBalance()
@@ -277,6 +322,8 @@ export class GnosisFetch {
             token_item.decimals = 18
             token_item.symbol = 'ETH'
             token_item.name = 'Ethereum'
+            token_item.logoUri =
+              'https://assets.coingecko.com/coins/images/279/large/ethereum.png?1696501628'
             token_map.set(
               '0x0000000000000000000000000000000000000000',
               token_item
@@ -298,7 +345,11 @@ export class GnosisFetch {
             const token_item = token_map.get(addr)
             token_item.usd = tokenDetailsUSD[token].price
             if (token_item.logoUri === '') {
-              token_item.logoUri = tokenDetailsUSD[token].image
+              token_item.logoUri =
+                tokenDetailsUSD[token].image === undefined ||
+                tokenDetailsUSD[token].image === ''
+                  ? 'https://app.safe.global/images/common/token-placeholder.svg'
+                  : tokenDetailsUSD[token].image
             }
             token_map.set(addr, token_item)
           }
@@ -316,7 +367,6 @@ export class GnosisFetch {
     try {
       const res = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/all-transactions/?executed=false&queued=true&trusted=true`
-        // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/all-transactions/?executed=false&queued=true&trusted=true`
       )
       let token_map = await this.getTokenMap()
       let queueTransaction: TxObject[] = []
@@ -346,7 +396,6 @@ export class GnosisFetch {
             transaction.safeTxHash = item?.safeTxHash
             transaction.nonce = item?.nonce
             transaction.date = item?.submissionDate
-            // transaction.confirmations = item?.confirmations
             item?.confirmations.map((ownerObject: any) => {
               confirmation.push(ownerObject.owner)
             })
@@ -413,7 +462,6 @@ export class GnosisFetch {
               transaction.type = TransactionType.SENT
               transaction.nature = TransactionNature.BATCH
               item?.dataDecoded?.parameters[0]?.valueDecoded?.map((tx: any) => {
-                // console.log('TXSDK: ', tx)
                 if (tx.data === null && tx.value != null) {
                   let transactionDetailsTemp: TxDetails = {
                     walletAddress: '',
@@ -485,12 +533,12 @@ export class GnosisFetch {
     try {
       const res = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/all-transactions/?executed=true&queued=false&trusted=true`
-        // `https://safe-transaction-goerli.safe.global/api/v1/safes/0x6744fC3A5A9CAAeC22c939Bb0737679b768C5e4c/all-transactions/?executed=true&queued=false&trusted=true`
       )
       let token_map = await this.getTokenMap()
       let historyTransaction: TxHistoryObject[] = []
       let txURL = 'https://etherscan.io/tx/'
-      res.data.results.map((item: any) => {
+      for (let i = 0; i < res.data.results.length; i++) {
+        let item = res.data.results[i]
         const transactionDetails: TxHistoryDetails[] = []
         const transaction: TxHistoryObject = {
           nonce: -1,
@@ -518,7 +566,7 @@ export class GnosisFetch {
             transaction.nature = TransactionNature.OTHER
           }
           if (item?.transfers?.length > 0) {
-            item?.transfers.map((tx: any) => {
+            item?.transfers.map(async (tx: any) => {
               let transactionDetailsTemp: TxHistoryDetails = {
                 from: '',
                 walletAddress: '',
@@ -550,8 +598,9 @@ export class GnosisFetch {
                 transaction.transactionDetails.push(transactionDetailsTemp)
               } else if (tx?.type === 'ERC20_TRANSFER') {
                 // Recieving other erc20 tokens
-                const tokenDetails = token_map?.get(
-                  tx?.tokenAddress.toLowerCase()
+                const tokenDetails = await this.getTokenDetailsPortal(
+                  tx?.tokenAddress.toLowerCase(),
+                  token_map!
                 )
                 transactionDetailsTemp.amount = Number(
                   ethers.utils.formatUnits(
@@ -611,8 +660,9 @@ export class GnosisFetch {
               transactionDetailsTemp.logo = tokenDetails.logoUri
               transaction.transactionDetails.push(transactionDetailsTemp)
             } else if (item?.transfers[0].type === 'ERC20_TRANSFER') {
-              const tokenDetails = token_map?.get(
-                item?.transfers[0].tokenAddress.toLowerCase()
+              const tokenDetails = await this.getTokenDetailsPortal(
+                item?.transfers[0].tokenAddress.toLowerCase(),
+                token_map!
               )
               transactionDetailsTemp.walletAddress = item?.transfers[0].to
               transactionDetailsTemp.amount = Number(
@@ -637,7 +687,7 @@ export class GnosisFetch {
           ) {
             transaction.nature = TransactionNature.BATCH
             transaction.type = TransactionType.SENT
-            item?.transfers.map((tx: any) => {
+            item?.transfers.map(async (tx: any) => {
               let transactionDetailsTemp: TxHistoryDetails = {
                 from: '',
                 walletAddress: '',
@@ -666,8 +716,9 @@ export class GnosisFetch {
                 transactionDetailsTemp.logo = tokenDetails.logoUri
                 transaction.transactionDetails.push(transactionDetailsTemp)
               } else if (tx.type === 'ERC20_TRANSFER') {
-                const tokenDetails = token_map?.get(
-                  tx.tokenAddress.toLowerCase()
+                const tokenDetails = await this.getTokenDetailsPortal(
+                  tx.tokenAddress.toLowerCase(),
+                  token_map!
                 )
                 transactionDetailsTemp.walletAddress = tx.to
                 transactionDetailsTemp.amount = Number(
@@ -701,10 +752,8 @@ export class GnosisFetch {
           transaction.nature = TransactionNature.OTHER
           transaction.type = TransactionType.OTHER
         }
-
         historyTransaction.push(transaction)
-      })
-
+      }
       return historyTransaction
     } catch (error) {
       throw error
