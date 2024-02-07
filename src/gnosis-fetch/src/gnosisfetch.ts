@@ -240,10 +240,12 @@ export class GnosisFetch {
             symbol: '',
             balance: 0,
             usdValue: 0,
+            tokenAddress: '',
           }
           widgetItem.balance = key.balance
           widgetItem.symbol = key.symbol
           widgetItem.usdValue = key.usd
+          widgetItem.tokenAddress = key.address
           widget.push(widgetItem)
         })
         return widget

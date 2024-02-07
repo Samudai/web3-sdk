@@ -209,4 +209,5 @@ export type WidgetBalance = {
   symbol: string
   balance: number
   usdValue: number
+  tokenAddress: string
 }
