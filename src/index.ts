@@ -10,6 +10,7 @@ export * from './subdomain/src/subdomain'
 export * from './NFTClaim/src/NFTClaim'
 export * from './farcaster/src/farcaster'
 export * from './ens-redirection/src/ClaimSubdomain'
+export * from './points/src/points'
 
 export * as GnosisTypes from './gnosis/utils/types'
 export * as LitProtocolTypes from './lit-protocol/utils/types'
