@@ -2,6 +2,16 @@
 
 ## All in one web3 integrations for Samudai
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Gnosis APIs](#gnosis-apis)
+- [NFT Profile APIs](#nft-profile-apis)
+- [Lit Protocol APIs](#lit-protocol-apis)
+- [SIWE](#siwe)
+- [Snapshot](#snapshot)
+
 ## Current Integrations on SDK
 
 SDK currently has the following for the web3 integrations
@@ -14,7 +24,7 @@ SDK currently has the following for the web3 integrations
 
 ## Installation
 
-Dillinger requires [Node.js](https://nodejs.org/).
+This SDK requires [Node.js](https://nodejs.org/).
 
 ```sh
 npm i web3-sdk-samudai
@@ -34,19 +44,19 @@ The SDK has the following components and the below table provides an overview to
 
 ## Gnosis APIs
 
-Gnosis APis are used to create transactions on the multisig and fetch transactions.
+Gnosis APIs are used to create transactions on the multisig and fetch transactions.
 
 To use Gnosis
 
-### Initialize gnosis:
+### Initialize gnosis
 
-```sh
+```js
 const gnosis = new Gnosis(provider: Web3Provider, chaindId: number)
 ```
 
 ### To create a single gnosis transaction
 
-```sh
+```js
 const result = await gnosis.createSingleGnosisTx(receiverAddress: string, value: string,
 safeAddress: string, senderAddress: string)
 ```
@@ -54,11 +64,11 @@ safeAddress: string, senderAddress: string)
 > Param 1: `safeAddress` Gnosis safe address.
 > Param 2: `receiverAddress` Wallet address of the user whom the funds is being sent.
 > Param 3: `value` ETH value in wei.
-> Param 4: `senderAddress` Waller address of the sender
+> Param 4: `senderAddress` Wallet address of the sender
 
 ### To create a batch gnosis transaction
 
-```sh
+```js
 const result = await gnosis.createBatchGnosisTx(safeAddress: string, receiverAddresses: string[],
 value: string, senderAddress: string)
 ```
@@ -66,11 +76,11 @@ value: string, senderAddress: string)
 > Param 1: `safeAddress` Gnosis safe address.
 > Param 2: `receiverAddresses` Wallet addresses of the users whom the funds is being sent.
 > Param 3: `value` ETH value in wei.
-> Param 4: `senderAddress` Waller address of the sender
+> Param 4: `senderAddress` Wallet address of the sender
 
 ### To get pending transactions for a safe
 
-```sh
+```js
 const result = await gnosis.getPendingTransactions(safeAddress: string)
 ```
 
@@ -78,13 +88,13 @@ const result = await gnosis.getPendingTransactions(safeAddress: string)
 
 Example
 
-```sh
-const result = await gnosis.getPendingTransactions("0xE666431e8Ba10B17D296aB16A4FF8d9A552eb488")
+```js
+const result = await gnosis.getPendingTransactions("<ethWalletAddress>")
 ```
 
 ### To get past / executed transactions for a safe
 
-```sh
+```js
 const result = await gnosis.getExecutedTransactions(safeAddress: string)
 ```
 
@@ -92,13 +102,13 @@ const result = await gnosis.getExecutedTransactions(safeAddress: string)
 
 Example
 
-```sh
-const result = await gnosis.getExecutedTransactions("0xE666431e8Ba10B17D296aB16A4FF8d9A552eb488")
+```js
+const result = await gnosis.getExecutedTransactions("<safeAddress>")
 ```
 
-### To get transactions details, status of a transactions for a safe transaction hash
+### To get transactions details, status of a transaction for a safe transaction hash
 
-```sh
+```js
 const result = await gnosis.getTransactionDetails(safeTxHash: string)
 ```
 
@@ -106,13 +116,13 @@ const result = await gnosis.getTransactionDetails(safeTxHash: string)
 
 Example
 
-```sh
-const result = await gnosis.getTransactionDetails("0x4a429ae97dd5bac92e9eef8e28fba94cf8813474c485228e58d81f04c332c399")
+```js
+const result = await gnosis.getTransactionDetails("<safeTxHash>")
 ```
 
 ### To connect a gnosis safe
 
-```sh
+```js
 const result = await gnosis.connectGnosis(userAddress: string)
 ```
 
@@ -122,8 +132,8 @@ This will return the safes for which user is an owner and also list of all other
 
 Example
 
-```sh
-const result = await gnosis.gnosisConnect("0x4a429ae97dd5bac92e9eef8e28fba94cf8813474c485228e58d81f04c332c399")
+```js
+const result = await gnosis.connectGnosis("<safeAddress>")
 ```
 
 ---
@@ -132,15 +142,15 @@ const result = await gnosis.gnosisConnect("0x4a429ae97dd5bac92e9eef8e28fba94cf88
 
 NFT Profile APIs are used to fetch the NFTs owned by the user on ETH and Polygon which can later be set as profile photos
 
-### Initialize NFT Profile Photos:
+### Initialize NFT Profile Photos
 
-```sh
+```js
 const nftProfile = new NFTProfile()
 ```
 
 ### To get ETH based NFTs
 
-```sh
+```js
 const ethNFTs = await nftProfile.getEthProfilePPs(ethUserAddress: string)
 ```
 
@@ -148,13 +158,13 @@ const ethNFTs = await nftProfile.getEthProfilePPs(ethUserAddress: string)
 
 Example
 
-```sh
-const ethNFTs = await nftProfile.getEthProfilePPs(0xB1BFB38a527D05442D48068ca9798FD3E5d6ce0F)
+```js
+const ethNFTs = await nftProfile.getEthProfilePPs("<ethWalletAddress>")
 ```
 
 ### To get Polygon based NFTs
 
-```sh
+```js
 const polygonNFTs = await nftProfile.getMaticProfilePPs(maticUserAddress: string)
 ```
 
@@ -164,19 +174,19 @@ const polygonNFTs = await nftProfile.getMaticProfilePPs(maticUserAddress: string
 
 ## Lit Protocol APIs
 
-Lit Protocol APIs are used to for token gating
+Lit Protocol APIs are used for token gating
 
 To use Lit Protocol
 
-### Initialize Lit Protocol:
+### Initialize Lit Protocol
 
-```sh
+```js
 const litProtocol = new LitProtocol()
 ```
 
 ### To create a Lit protocol gating
 
-```sh
+```js
 const tokenGating = await litProtocol.init(
     chain: string,
     contractAddress: string,
@@ -200,18 +210,19 @@ const tokenGating = await litProtocol.init(
 
 Example
 
-```sh
+```js
 const tokenGating = await litProtocol.init(
     chain: "rinkeby",
     contractAddress: "0xB1BFB38a527D05442D48068ca9798FD3E5d6ce0F",
     typeOfGating: 0,
     baseUrl: "http://samudai.xyz",
-    path: '/dao/f298865a-c3a3-46e1-8ff6-ffd63ec23257',
-    memberId: aaaff17d-c166-430d-9afc-82c88394c7b8,
+    path: '/dao/<daoId>',
+    memberId: <memberId>,
 )
 ```
 
 List of chains
+
 | chain |
 | ------ |
 | ethereum |
@@ -221,11 +232,11 @@ List of chains
 | mumbai |
 
 For further chain supports based on EVM use the following list
-https://developer.litprotocol.com/supportedChains
+<https://developer.litprotocol.com/supportedChains>
 
 Enum for TokenGatingType
 
-```sh
+```js
 enum TokenGatingType = {
   ERC20,
   ERC721,
@@ -239,7 +250,7 @@ ERC1155 = 2
 
 ### To verify the user
 
-```sh
+```js
 const result = await litProtocol.verifyLit(jwt: string, memberId: string)
 ```
 
@@ -256,15 +267,15 @@ SIWE is used for Sign in with ethereum
 
 To use SIWE
 
-### Initialize SIWE:
+### Initialize SIWE
 
-```sh
+```js
 const siwe = new Siwe(provider: Web3Provider)
 ```
 
 ### To sign in user, you need to ask the user to sign a message and push the users to required screen after successful signing
 
-```sh
+```js
 const result = siwe.walletSignIn(domain: string)
 ```
 
@@ -272,7 +283,7 @@ const result = siwe.walletSignIn(domain: string)
 
 Example
 
-```
+```js
 const result = siwe.walletSignIn("https://samudai.xyz")
 ```
 
@@ -284,9 +295,9 @@ Snapshot is used for fetching proposals and voting for them.
 
 To use snapshot
 
-### Initialize Snapshot:
+### Initialize Snapshot
 
-```sh
+```js
 const snapshot = new Snapshot(spaceId: string, networkType: number, provider: Web3Provider)
 ```
 
@@ -296,30 +307,30 @@ const snapshot = new Snapshot(spaceId: string, networkType: number, provider: We
 
 Example
 
-```
-const snapshot = new Snapshot("biryani.eth", 1, provider)
+```js
+const snapshot = new Snapshot("biryani.eth", 1, provider: Web3Provider)
 ```
 
 ### To get information about a Space
 
-```sh
+```js
 const result = snapshot.getSpace()
 ```
 
 ### To get active proposals
 
-```sh
+```js
 const result = snapshot.getActiveProposals()
 ```
 
 ### To get Recent proposals
 
-```sh
+```js
 const result = snapshot.getRecentProposals()
 ```
 
 ### To cast a vote
 
-```sh
+```js
 const result = snapshot.castVote(proposalId: string, choice: number,account: any)
 ```
