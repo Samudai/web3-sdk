@@ -1,7 +1,6 @@
 import { Networks } from '../../gnosis/utils/networks'
 import { ethers } from 'ethers'
 import {
-  ErrorResponse,
   SafeTransactions,
   TransactionDetails,
   TxObject,
@@ -12,7 +11,6 @@ import {
   TransactionType,
   TransactionNature,
   WidgetBalance,
-  SafeMultisigTransactionResponse,
   SafeBalanceUsdResponse,
   SafeMultisigTransactionListResponse,
 } from '../../gnosis/utils/types'
@@ -108,7 +106,7 @@ export class GnosisFetch {
       }
 
       return owners
-    } catch (err) {
+    } catch {
       return null
     }
   }
@@ -130,7 +128,7 @@ export class GnosisFetch {
         (owner) => !reactedOwners.includes(owner)
       )
       return ownersNeedToBeNudged
-    } catch (error) {
+    } catch {
       return null
     }
   }
@@ -227,7 +225,7 @@ export class GnosisFetch {
           }
         }
         const widget: WidgetBalance[] = []
-        token_map.forEach((key: any, value: any) => {
+        token_map.forEach((key: any) => {
           const widgetItem: WidgetBalance = {
             symbol: '',
             balance: 0,

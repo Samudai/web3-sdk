@@ -20,12 +20,9 @@ module.exports = tseslint.config(
     plugins: { prettier: prettierPlugin },
     rules: {
       'prettier/prettier': 'error',
-      // The codebase predates strict linting and uses `any` and CJS `require`
-      // pervasively (it was never linted in CI). Keep these non-blocking so the
-      // dependency migration isn't gated on a repo-wide refactor.
+      // The codebase uses `any` pervasively (it predates strict linting); keep
+      // this non-blocking rather than gating on a repo-wide retype.
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-require-imports': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
     },
   }
 )

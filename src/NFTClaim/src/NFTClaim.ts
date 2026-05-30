@@ -1,6 +1,5 @@
 import { ethers, BrowserProvider, TransactionResponse } from 'ethers'
 import ContractABI from '../contracts/abi.json'
-import { ErrorResponse } from '../utils/types'
 import { GatewayURL } from '../utils/constants'
 // import { initFunction } from '../../biconomy'
 
@@ -24,7 +23,6 @@ export class NFTClaim {
         // const smartAccount = await initFunction(provider)
 
         const signer = await provider.getSigner()
-        const address = await signer.getAddress()
         const contract = new ethers.Contract(
           this.contractAddress,
           ContractABI,

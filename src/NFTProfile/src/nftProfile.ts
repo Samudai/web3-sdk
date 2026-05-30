@@ -4,7 +4,6 @@ import {
   Network,
   OwnedNftsResponse,
 } from 'alchemy-sdk'
-import { ErrorResponse } from '../utils/types'
 import { NFTNetworks } from '../utils/network'
 export class NFTProfile {
   private alchemy: Alchemy

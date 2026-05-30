@@ -107,7 +107,7 @@ export class Farcaster {
       ).ownerOf(this.usernameToTokenId(username))
 
       return ownrAddress
-    } catch (err) {
+    } catch {
       return undefined
     }
   }
@@ -155,7 +155,7 @@ export class Farcaster {
         `${this.API_URL}/profiles/${address}/casts`
       )
       return response.data.result
-    } catch (err) {
+    } catch {
       return []
     }
   }
@@ -171,7 +171,7 @@ export class Farcaster {
       } else {
         return undefined
       }
-    } catch (err) {
+    } catch {
       return undefined
     }
   }

@@ -67,7 +67,7 @@ export class Points {
            }
         }
        }`
-    const graphql = await this.alchemy.notify.createWebhook(
+    await this.alchemy.notify.createWebhook(
       webhookAddress,
       WebhookType.GRAPHQL,
       {

@@ -1,17 +1,16 @@
 import { ethers } from 'ethers'
+import namehash from '@ensdomains/eth-ens-namehash'
+import contentHash from 'content-hash'
 import {
   CANNOT_SET_RESOLVER,
   CANNOT_UNWRAP,
   CAN_EXTEND_EXPIRY,
   ENS_DOMAIN_NAME,
-  GOERLI,
   MAINNET,
   PARENT_CANNOT_CONTROL,
   PVT_KEY,
 } from '../utils/constants'
 import { ImplementationContractABI } from '../contracts/Contract_ABI'
-const namehash = require('@ensdomains/eth-ens-namehash')
-const contentHash = require('content-hash')
 import { transaction } from '../utils/types'
 import { createSmartAccountClient, PaymasterMode } from '@biconomy/account'
 
@@ -45,7 +44,7 @@ export class ClaimSubdomain {
       })
       console.log('address: ', await biconomySmartAccount.getAccountAddress())
       return biconomySmartAccount
-    } catch (error) {
+    } catch {
       throw new Error('Error creating smart account.')
     }
   }
@@ -53,7 +52,7 @@ export class ClaimSubdomain {
   setCID = (cid: string) => {
     try {
       this.cid = cid
-    } catch (error) {
+    } catch {
       throw new Error('Error setting CID.')
     }
   }
@@ -68,7 +67,7 @@ export class ClaimSubdomain {
       } else {
         return false
       }
-    } catch (error) {
+    } catch {
       throw new Error('Error finding the availability of subdomain.')
     }
   }
@@ -116,7 +115,7 @@ export class ClaimSubdomain {
           success: false,
         }
       }
-    } catch (error) {
+    } catch {
       throw new Error('Error claiming the subdomain.')
     }
   }

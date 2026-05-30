@@ -556,7 +556,7 @@ export class Gnosis {
       }
 
       return owners
-    } catch (err) {
+    } catch {
       return null
     }
   }
