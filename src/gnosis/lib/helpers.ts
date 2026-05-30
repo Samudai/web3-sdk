@@ -1,21 +1,10 @@
-import { TokenMetadataResponse } from '@alch/alchemy-sdk'
-import Web3 from 'web3'
+import { TokenMetadataResponse } from 'alchemy-sdk'
+import { Interface } from 'ethers'
 import { UserTokenBalance } from '../../tokenBalance/src/tokenbalance'
 
 export const encodeData = (address: string, value: string): string => {
-  const web3: Web3 = new Web3()
-  const encodedCallData: string = web3.eth.abi.encodeFunctionCall(
-    {
-      name: 'transfer',
-      type: 'function',
-      inputs: [
-        { name: 'dst', type: 'address' },
-        { name: 'wad', type: 'uint256' },
-      ],
-    },
-    [address, value]
-  )
-  return encodedCallData
+  const iface = new Interface(['function transfer(address dst, uint256 wad)'])
+  return iface.encodeFunctionData('transfer', [address, value])
 }
 
 export const getDecimalsForToken = async (

@@ -1,9 +1,17 @@
-import LitJsSdk from 'lit-js-sdk'
+import type { Signer } from 'ethers'
+import { LitNodeClient } from '@lit-protocol/lit-node-client'
+import { encryptString, decryptToString } from '@lit-protocol/encryption'
+import { LIT_NETWORK, LIT_ABILITY } from '@lit-protocol/constants'
+import {
+  LitAccessControlConditionResource,
+  createSiweMessage,
+  generateAuthSig,
+} from '@lit-protocol/auth-helpers'
 import { TokenGatingType } from '../utils/enums'
 import {
   AccessControlConditions,
-  ErrorResponse,
-  RecourceId,
+  LitGateToken,
+  LitNetworkName,
 } from '../utils/types'
 import {
   getERC20TokenGating,
@@ -11,100 +19,162 @@ import {
   getERC721TokenGating,
 } from '../lib/tokenConditions'
 
+const LIT_NETWORK_MAP: Record<
+  LitNetworkName,
+  (typeof LIT_NETWORK)[keyof typeof LIT_NETWORK]
+> = {
+  datil: LIT_NETWORK.Datil,
+  'datil-test': LIT_NETWORK.DatilTest,
+  'datil-dev': LIT_NETWORK.DatilDev,
+}
+
+/**
+ * Token-gating via Lit Protocol v7.
+ *
+ * The deprecated `lit-js-sdk` JWT flow (saveSigningCondition / getSignedToken /
+ * verifyJwt) was removed upstream. The modern equivalent is identity-based
+ * encryption: `encryptGate` encrypts a marker (e.g. a member id) behind the
+ * token-gating access-control conditions, and `verifyGate` proves access by
+ * decrypting it with session signatures derived from the caller's wallet.
+ */
 export class LitProtocol {
-  accessControlConditions: AccessControlConditions[] = []
-  resourceId: RecourceId = {
-    baseUrl: '',
-    path: '',
-    orgId: '',
-    role: '',
-    extraData: '',
+  private network: LitNetworkName
+
+  constructor(network: LitNetworkName = 'datil') {
+    this.network = network
   }
 
-  init = async (
+  private buildConditions = (
     chain: string,
     contractAddress: string,
     typeOfGating: TokenGatingType,
-    baseUrl: string,
-    path: string,
-    memberId: string,
     tokenId?: string
-  ): Promise<string> => {
-    try {
-      if (typeOfGating === TokenGatingType.ERC20) {
-        this.accessControlConditions = getERC20TokenGating(
-          contractAddress,
-          chain
-        )
-      } else if (typeOfGating === TokenGatingType.ERC721) {
-        this.accessControlConditions = getERC721TokenGating(
-          contractAddress,
-          chain,
-          tokenId
-        )
-      } else if (typeOfGating === TokenGatingType.ERC1155) {
-        this.accessControlConditions = getERC1155TokenGating(
-          contractAddress,
-          chain,
-          tokenId
-        )
-      } else {
-        throw new Error('Invalid token gating type')
-      }
-
-      this.resourceId = {
-        baseUrl: baseUrl,
-        path: path,
-        orgId: '',
-        role: '',
-        extraData: memberId,
-      }
-
-      const client = new LitJsSdk.LitNodeClient({
-        alertWhenUnauthorized: false,
-      })
-      await client.connect()
-      const authSig = await LitJsSdk.checkAndSignAuthMessage({ chain: chain })
-      await client.saveSigningCondition({
-        accessControlConditions: this.accessControlConditions,
-        chain,
-        authSig,
-        resourceId: this.resourceId,
-      })
-
-      const jwt: string = await client.getSignedToken({
-        accessControlConditions: this.accessControlConditions,
-        chain,
-        authSig,
-        resourceId: this.resourceId,
-      })
-
-      return jwt
-    } catch (err: any) {
-      throw err
+  ): AccessControlConditions[] => {
+    if (typeOfGating === TokenGatingType.ERC20) {
+      return getERC20TokenGating(contractAddress, chain)
+    } else if (typeOfGating === TokenGatingType.ERC721) {
+      return getERC721TokenGating(contractAddress, chain, tokenId)
+    } else if (typeOfGating === TokenGatingType.ERC1155) {
+      return getERC1155TokenGating(contractAddress, chain, tokenId)
+    } else {
+      throw new Error('Invalid token gating type')
     }
   }
 
-  verifyLit = async (jwt: string, memberId: string): Promise<boolean> => {
-    try {
-      if (!jwt) {
-        return false
-      } else {
-        const { verified, payload } = LitJsSdk.verifyJwt({ jwt })
+  /**
+   * Replaces the old `init` (which returned a JWT). Encrypts `memberId` behind
+   * the token-gating conditions and returns a self-describing gate token.
+   */
+  encryptGate = async (args: {
+    chain: string
+    contractAddress: string
+    typeOfGating: TokenGatingType
+    memberId: string
+    tokenId?: string
+  }): Promise<LitGateToken> => {
+    const { chain, contractAddress, typeOfGating, memberId, tokenId } = args
+    const accessControlConditions = this.buildConditions(
+      chain,
+      contractAddress,
+      typeOfGating,
+      tokenId
+    )
 
-        if (
-          payload.baseUrl !== this.resourceId.baseUrl ||
-          payload.path !== this.resourceId.path ||
-          payload.extraData !== memberId
-        ) {
-          return false
-        } else {
-          return true
-        }
+    const client = new LitNodeClient({
+      litNetwork: LIT_NETWORK_MAP[this.network],
+      debug: false,
+    })
+    await client.connect()
+
+    try {
+      const { ciphertext, dataToEncryptHash } = await encryptString(
+        {
+          accessControlConditions: accessControlConditions as any,
+          dataToEncrypt: memberId,
+        },
+        client
+      )
+
+      return {
+        ciphertext,
+        dataToEncryptHash,
+        accessControlConditions,
+        chain,
+        marker: memberId,
+        network: this.network,
       }
+    } finally {
+      await client.disconnect()
+    }
+  }
+
+  /**
+   * Replaces the old `verifyLit(jwt, memberId)`. Returns true iff the caller's
+   * wallet satisfies the gate's access-control conditions AND the decrypted
+   * marker matches `expectedMemberId`.
+   */
+  verifyGate = async (args: {
+    signer: Signer
+    token: LitGateToken
+    expectedMemberId: string
+  }): Promise<boolean> => {
+    const { signer, token, expectedMemberId } = args
+    const client = new LitNodeClient({
+      litNetwork: LIT_NETWORK_MAP[token.network],
+      debug: false,
+    })
+
+    try {
+      await client.connect()
+
+      const resourceString =
+        await LitAccessControlConditionResource.generateResourceString(
+          token.accessControlConditions as any,
+          token.dataToEncryptHash
+        )
+
+      const sessionSigs = await client.getSessionSigs({
+        chain: token.chain,
+        resourceAbilityRequests: [
+          {
+            resource: new LitAccessControlConditionResource(resourceString),
+            ability: LIT_ABILITY.AccessControlConditionDecryption,
+          },
+        ],
+        authNeededCallback: async ({
+          uri,
+          expiration,
+          resourceAbilityRequests,
+        }: any) => {
+          const toSign = await createSiweMessage({
+            uri,
+            expiration,
+            resources: resourceAbilityRequests,
+            walletAddress: await signer.getAddress(),
+            nonce: await client.getLatestBlockhash(),
+            litNodeClient: client,
+          })
+          return generateAuthSig({ signer: signer as any, toSign })
+        },
+      })
+
+      const decrypted = await decryptToString(
+        {
+          accessControlConditions: token.accessControlConditions as any,
+          ciphertext: token.ciphertext,
+          dataToEncryptHash: token.dataToEncryptHash,
+          chain: token.chain,
+          sessionSigs,
+        },
+        client
+      )
+
+      return decrypted === expectedMemberId
     } catch (err: any) {
       console.log(err)
       return false
+    } finally {
+      await client.disconnect()
     }
   }
 }

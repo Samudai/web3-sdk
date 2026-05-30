@@ -3,4 +3,4 @@ export type ErrorResponse = {
   error: string
 }
 
-export { OwnedNftsResponse } from '@alch/alchemy-sdk'
+export type { OwnedNftsResponse } from 'alchemy-sdk'

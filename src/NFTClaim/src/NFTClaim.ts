@@ -1,8 +1,6 @@
-import { ethers } from 'ethers'
-import { TransactionResponse, Web3Provider } from '@ethersproject/providers'
+import { ethers, BrowserProvider, TransactionResponse } from 'ethers'
 import ContractABI from '../contracts/abi.json'
 import { ErrorResponse } from '../utils/types'
-import axios from 'axios'
 import { GatewayURL } from '../utils/constants'
 // import { initFunction } from '../../biconomy'
 
@@ -17,7 +15,7 @@ export class NFTClaim {
   }
 
   claimNFT = async (
-    provider: Web3Provider,
+    provider: BrowserProvider,
     phase?: number
     // jwt: string
   ): Promise<boolean> => {
@@ -25,7 +23,7 @@ export class NFTClaim {
       if (provider && this.contractAddress) {
         // const smartAccount = await initFunction(provider)
 
-        const signer = provider.getSigner()
+        const signer = await provider.getSigner()
         const address = await signer.getAddress()
         const contract = new ethers.Contract(
           this.contractAddress,

@@ -1,5 +1,5 @@
 import { Networks } from '../../gnosis/utils/networks'
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import {
   ErrorResponse,
   SafeTransactions,
@@ -12,13 +12,11 @@ import {
   TransactionType,
   TransactionNature,
   WidgetBalance,
-} from '../../gnosis/utils/types'
-import axios from 'axios'
-import {
   SafeMultisigTransactionResponse,
   SafeBalanceUsdResponse,
   SafeMultisigTransactionListResponse,
-} from '@gnosis.pm/safe-service-client'
+} from '../../gnosis/utils/types'
+import axios from 'axios'
 export class GnosisFetch {
   private safeAddress = ''
   private chainId: number
@@ -128,8 +126,7 @@ export class GnosisFetch {
         owners.push(owner)
       }
 
-      let ownersNeedToBeNudged: string[]
-      ownersNeedToBeNudged = owners.filter(
+      const ownersNeedToBeNudged: string[] = owners.filter(
         (owner) => !reactedOwners.includes(owner)
       )
       return ownersNeedToBeNudged
@@ -174,6 +171,7 @@ export class GnosisFetch {
       const token_map = new Map()
       if (tokenDetails.length > 0) {
         for (let token = 0; token < tokenDetails.length; token++) {
+          const item = tokenDetails[token]
           const token_item = {
             address: '',
             decimals: 0,
@@ -184,34 +182,28 @@ export class GnosisFetch {
             usd: 0,
             balance: 0,
           }
-          if (
-            tokenDetails[token].token === null &&
-            tokenDetails[token].balance !== null
-          ) {
+          if (item.token === null && item.balance !== null) {
             token_item.address = '0x0000000000000000000000000000000000000000'
             token_item.decimals = 18
             token_item.symbol = 'ETH'
             token_item.name = 'Ethereum'
             token_item.balance = Number(
-              ethers.utils.formatUnits(
-                BigNumber.from(tokenDetails[token].balance),
-                18
-              )
+              ethers.formatUnits(ethers.toBigInt(item.balance), 18)
             )
             token_map.set(
               '0x0000000000000000000000000000000000000000',
               token_item
             )
-          } else if (tokenDetails[token].token !== null) {
-            token_item.address = tokenDetails[token].tokenAddress.toLowerCase()
-            token_item.decimals = tokenDetails[token].token.decimals
-            token_item.symbol = tokenDetails[token].token.symbol
-            token_item.name = tokenDetails[token].token.name
-            token_item.logoUri = tokenDetails[token].token.logoUri
+          } else if (item.token !== null) {
+            token_item.address = item.tokenAddress.toLowerCase()
+            token_item.decimals = item.token.decimals
+            token_item.symbol = item.token.symbol
+            token_item.name = item.token.name
+            token_item.logoUri = item.token.logoUri
             token_item.balance = Number(
-              ethers.utils.formatUnits(
-                BigNumber.from(tokenDetails[token].balance),
-                tokenDetails[token].token.decimals
+              ethers.formatUnits(
+                ethers.toBigInt(item.balance),
+                item.token.decimals
               )
             )
             token_map.set(token_item.address, token_item)
@@ -307,6 +299,7 @@ export class GnosisFetch {
       const token_map = new Map()
       if (tokenDetails.length > 0) {
         for (let token = 0; token < tokenDetails.length; token++) {
+          const item = tokenDetails[token]
           const token_item = {
             address: '',
             decimals: 0,
@@ -316,10 +309,7 @@ export class GnosisFetch {
             type: '',
             usd: 0,
           }
-          if (
-            tokenDetails[token].token === null &&
-            tokenDetails[token].balance !== null
-          ) {
+          if (item.token === null && item.balance !== null) {
             token_item.address = '0x0000000000000000000000000000000000000000'
             token_item.decimals = 18
             token_item.symbol = 'ETH'
@@ -330,12 +320,12 @@ export class GnosisFetch {
               '0x0000000000000000000000000000000000000000',
               token_item
             )
-          } else if (tokenDetails[token].token !== null) {
-            token_item.address = tokenDetails[token].tokenAddress.toLowerCase()
-            token_item.decimals = tokenDetails[token].token.decimals
-            token_item.symbol = tokenDetails[token].token.symbol
-            token_item.name = tokenDetails[token].token.name
-            token_item.logoUri = tokenDetails[token].token.logoUri
+          } else if (item.token !== null) {
+            token_item.address = item.tokenAddress.toLowerCase()
+            token_item.decimals = item.token.decimals
+            token_item.symbol = item.token.symbol
+            token_item.name = item.token.name
+            token_item.logoUri = item.token.logoUri
             token_map.set(token_item.address, token_item)
           } else {
             return
@@ -370,9 +360,9 @@ export class GnosisFetch {
       const res = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/all-transactions/?executed=false&queued=true&trusted=true`
       )
-      let token_map = await this.getTokenMap()
-      let queueTransaction: TxObject[] = []
-      let isExecMap = new Map()
+      const token_map = await this.getTokenMap()
+      const queueTransaction: TxObject[] = []
+      const isExecMap = new Map()
       res.data.results.map((item: any) => {
         const transactionDetails: TxDetails[] = []
         const confirmation: string[] = []
@@ -407,7 +397,7 @@ export class GnosisFetch {
             if (item?.data === null && item?.value === '0') {
               transaction.type = TransactionType.REJECTION
             } else if (item?.dataDecoded?.method === 'transfer') {
-              let transactionDetailsTemp: TxDetails = {
+              const transactionDetailsTemp: TxDetails = {
                 walletAddress: '',
                 currency: '',
                 amount: 0,
@@ -420,8 +410,8 @@ export class GnosisFetch {
                 item?.dataDecoded?.parameters?.[0]?.value
               const tokenDetails = token_map?.get(item?.to.toLowerCase())
               transactionDetailsTemp.amount = Number(
-                ethers.utils.formatUnits(
-                  BigNumber.from(item?.dataDecoded?.parameters?.[1]?.value),
+                ethers.formatUnits(
+                  ethers.toBigInt(item?.dataDecoded?.parameters?.[1]?.value),
                   tokenDetails?.decimals
                 )
               )
@@ -434,7 +424,7 @@ export class GnosisFetch {
               transaction.transactionDetails.push(transactionDetailsTemp)
             } // single Ether transfer
             else if (item?.data === null && item?.value != null) {
-              let transactionDetailsTemp: TxDetails = {
+              const transactionDetailsTemp: TxDetails = {
                 walletAddress: '',
                 currency: '',
                 amount: 0,
@@ -448,8 +438,8 @@ export class GnosisFetch {
                 '0x0000000000000000000000000000000000000000'
               )
               transactionDetailsTemp.amount = Number(
-                ethers.utils.formatUnits(
-                  BigNumber.from(item?.value),
+                ethers.formatUnits(
+                  ethers.toBigInt(item?.value),
                   tokenDetails?.decimals
                 )
               )
@@ -465,7 +455,7 @@ export class GnosisFetch {
               transaction.nature = TransactionNature.BATCH
               item?.dataDecoded?.parameters[0]?.valueDecoded?.map((tx: any) => {
                 if (tx.data === null && tx.value != null) {
-                  let transactionDetailsTemp: TxDetails = {
+                  const transactionDetailsTemp: TxDetails = {
                     walletAddress: '',
                     currency: '',
                     amount: 0,
@@ -477,8 +467,8 @@ export class GnosisFetch {
                   )
                   transactionDetailsTemp.walletAddress = tx.to
                   transactionDetailsTemp.amount = Number(
-                    ethers.utils.formatUnits(
-                      BigNumber.from(tx.value),
+                    ethers.formatUnits(
+                      ethers.toBigInt(tx.value),
                       tokenDetails?.decimals
                     )
                   )
@@ -491,7 +481,7 @@ export class GnosisFetch {
                     transactionDetailsTemp.amount
                   transaction.transactionDetails.push(transactionDetailsTemp)
                 } else {
-                  let transactionDetailsTemp: TxDetails = {
+                  const transactionDetailsTemp: TxDetails = {
                     walletAddress: '',
                     currency: '',
                     amount: 0,
@@ -502,8 +492,8 @@ export class GnosisFetch {
                   transactionDetailsTemp.walletAddress =
                     tx.dataDecoded?.parameters?.[0]?.value
                   transactionDetailsTemp.amount = Number(
-                    ethers.utils.formatUnits(
-                      BigNumber.from(tx.dataDecoded?.parameters?.[1]?.value),
+                    ethers.formatUnits(
+                      ethers.toBigInt(tx.dataDecoded?.parameters?.[1]?.value),
                       tokenDetails?.decimals
                     )
                   )
@@ -536,11 +526,11 @@ export class GnosisFetch {
       const res = await axios.get(
         `${this.txServiceUrl}/api/v1/safes/${this.safeAddress}/all-transactions/?executed=true&queued=false&trusted=true`
       )
-      let token_map = await this.getTokenMap()
-      let historyTransaction: TxHistoryObject[] = []
-      let txURL = 'https://etherscan.io/tx/'
+      const token_map = await this.getTokenMap()
+      const historyTransaction: TxHistoryObject[] = []
+      const txURL = 'https://etherscan.io/tx/'
       for (let i = 0; i < res.data.results.length; i++) {
-        let item = res.data.results[i]
+        const item = res.data.results[i]
         const transactionDetails: TxHistoryDetails[] = []
         const transaction: TxHistoryObject = {
           nonce: -1,
@@ -569,7 +559,7 @@ export class GnosisFetch {
           }
           if (item?.transfers?.length > 0) {
             item?.transfers.map(async (tx: any) => {
-              let transactionDetailsTemp: TxHistoryDetails = {
+              const transactionDetailsTemp: TxHistoryDetails = {
                 from: '',
                 walletAddress: '',
                 currency: '',
@@ -585,8 +575,8 @@ export class GnosisFetch {
                   '0x0000000000000000000000000000000000000000'
                 )
                 transactionDetailsTemp.amount = Number(
-                  ethers.utils.formatUnits(
-                    BigNumber.from(tx?.value),
+                  ethers.formatUnits(
+                    ethers.toBigInt(tx?.value),
                     tokenDetails?.decimals
                   )
                 )
@@ -605,8 +595,8 @@ export class GnosisFetch {
                   token_map!
                 )
                 transactionDetailsTemp.amount = Number(
-                  ethers.utils.formatUnits(
-                    BigNumber.from(tx?.value),
+                  ethers.formatUnits(
+                    ethers.toBigInt(tx?.value),
                     tokenDetails?.decimals
                   )
                 )
@@ -635,7 +625,7 @@ export class GnosisFetch {
           if (item?.transfers?.length === 1) {
             transaction.nature = TransactionNature.SINGLE
             transaction.type = TransactionType.SENT
-            let transactionDetailsTemp: TxHistoryDetails = {
+            const transactionDetailsTemp: TxHistoryDetails = {
               from: '',
               walletAddress: '',
               currency: '',
@@ -649,8 +639,8 @@ export class GnosisFetch {
               )
               transactionDetailsTemp.walletAddress = item?.transfers[0].to
               transactionDetailsTemp.amount = Number(
-                ethers.utils.formatUnits(
-                  BigNumber.from(item?.transfers[0].value),
+                ethers.formatUnits(
+                  ethers.toBigInt(item?.transfers[0].value),
                   tokenDetails?.decimals
                 )
               )
@@ -668,8 +658,8 @@ export class GnosisFetch {
               )
               transactionDetailsTemp.walletAddress = item?.transfers[0].to
               transactionDetailsTemp.amount = Number(
-                ethers.utils.formatUnits(
-                  BigNumber.from(item?.transfers[0].value),
+                ethers.formatUnits(
+                  ethers.toBigInt(item?.transfers[0].value),
                   tokenDetails?.decimals
                 )
               )
@@ -690,7 +680,7 @@ export class GnosisFetch {
             transaction.nature = TransactionNature.BATCH
             transaction.type = TransactionType.SENT
             item?.transfers.map(async (tx: any) => {
-              let transactionDetailsTemp: TxHistoryDetails = {
+              const transactionDetailsTemp: TxHistoryDetails = {
                 from: '',
                 walletAddress: '',
                 currency: '',
@@ -704,8 +694,8 @@ export class GnosisFetch {
                 )
                 transactionDetailsTemp.walletAddress = tx.to
                 transactionDetailsTemp.amount = Number(
-                  ethers.utils.formatUnits(
-                    BigNumber.from(tx.value),
+                  ethers.formatUnits(
+                    ethers.toBigInt(tx.value),
                     tokenDetails?.decimals
                   )
                 )
@@ -724,8 +714,8 @@ export class GnosisFetch {
                 )
                 transactionDetailsTemp.walletAddress = tx.to
                 transactionDetailsTemp.amount = Number(
-                  ethers.utils.formatUnits(
-                    BigNumber.from(tx.value),
+                  ethers.formatUnits(
+                    ethers.toBigInt(tx.value),
                     tokenDetails?.decimals
                   )
                 )

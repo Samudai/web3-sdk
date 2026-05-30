@@ -1,26 +1,20 @@
-import { Transaction, ethers } from 'ethers'
-import { Provider, Web3Provider } from '@ethersproject/providers'
-import { EthSignSignature } from '@gnosis.pm/safe-core-sdk'
-import Safe, { EthersAdapter } from '@safe-global/protocol-kit'
+import { ethers, BrowserProvider } from 'ethers'
+import Safe, {
+  EthSafeSignature,
+  SafeTransactionOptionalProps,
+} from '@safe-global/protocol-kit'
+import SafeApiKit from '@safe-global/api-kit'
 import axios from 'axios'
 import { Networks } from '../utils/networks'
-import { SafeTransactionOptionalProps } from '@safe-global/protocol-kit'
 import {
-  SafeTransactionDataPartial,
   MetaTransactionData,
   SafeMultisigTransactionResponse,
   SafeSignature,
-  SafeTransactionData,
-} from '@safe-global/safe-core-sdk-types'
-import { SafeBalanceUsdResponse } from '@gnosis.pm/safe-service-client'
-import SafeApiKit, {
-  SafeMultisigTransactionListResponse,
   SafeInfoResponse,
+  SafeMultisigTransactionListResponse,
   SignatureResponse,
-} from '@safe-global/api-kit'
-import {
+  SafeBalanceUsdResponse,
   CustomERC20Token,
-  ErrorResponse,
   SafeExecutionStatus,
   SafeTransactionResponse,
   SafeTransactions,
@@ -32,15 +26,14 @@ import { encodeData, getDecimalsForToken } from '../lib/helpers'
 
 export class Gnosis {
   private safeAddress = ''
-  private provider: Web3Provider | null = null
+  private provider: BrowserProvider | null = null
   private chainId: number
-  private etherAdapter: EthersAdapter | null = null
 
   private txServiceUrl = ''
 
   //Constructor
 
-  constructor(provider: Web3Provider, chainId: number) {
+  constructor(provider: BrowserProvider, chainId: number) {
     this.provider = provider
     this.chainId = chainId
     Networks.forEach((network) => {
@@ -50,42 +43,30 @@ export class Gnosis {
     })
   }
 
-  // private generateBatchTransaction = (
-  //   value: string,
-  //   receiverAddresses: string[],
-  //   tokenAddress?: string
-  // ): MetaTransactionData[] => {
-  //   const transactions: MetaTransactionData[] = []
+  /**
+   * Adapts the ethers v6 BrowserProvider into the EIP-1193 provider that the
+   * Safe protocol-kit v7 `Safe.init` expects.
+   */
+  private buildEip1193 = () => ({
+    request: (args: { method: string; params?: any }) =>
+      this.provider!.send(args.method, args.params ?? []),
+  })
 
-  //   const receiverValue: number = parseInt(value) / receiverAddresses.length
+  private getApiKit = (): SafeApiKit =>
+    new SafeApiKit({
+      chainId: BigInt(this.chainId),
+      txServiceUrl: this.txServiceUrl,
+    })
 
-  //   if (tokenAddress) {
-  //     receiverAddresses.map((receiverAddress) => {
-  //       const encodedData = encodeData(
-  //         ethers.utils.getAddress(receiverAddress),
-  //         receiverValue.toString()
-  //       )
-
-  //       transactions.push({
-  //         to: ethers.utils.getAddress(tokenAddress),
-  //         value: '0',
-  //         data: encodedData,
-  //         operation: 0,
-  //       })
-  //     })
-  //   } else {
-  //     receiverAddresses.map((receiverAddress) => {
-  //       transactions.push({
-  //         to: receiverAddress,
-  //         value: receiverValue.toString(),
-  //         data: '0x',
-  //         operation: 0,
-  //       })
-  //     })
-  //   }
-
-  //   return transactions
-  // }
+  private getProtocolKit = async (safeAddress: string): Promise<Safe> => {
+    const signer = await this.provider!.getSigner()
+    const signerAddress = await signer.getAddress()
+    return Safe.init({
+      provider: this.buildEip1193(),
+      signer: signerAddress,
+      safeAddress,
+    })
+  }
 
   private generateCustomERC20Transaction = (
     receiverAddress: string,
@@ -96,12 +77,12 @@ export class Gnosis {
     customERC20Token.map((token) => {
       if (token.tokenAddress) {
         const encodedData = encodeData(
-          ethers.utils.getAddress(receiverAddress),
+          ethers.getAddress(receiverAddress),
           token.value
         )
 
         transactions.push({
-          to: ethers.utils.getAddress(token.tokenAddress),
+          to: ethers.getAddress(token.tokenAddress),
           value: '0',
           data: encodedData,
           operation: 0,
@@ -127,25 +108,12 @@ export class Gnosis {
     tokenAddress?: string
   ): Promise<SafeTransactionResponse> => {
     try {
-      this.safeAddress = ethers.utils.getAddress(safeAddress)
+      this.safeAddress = ethers.getAddress(safeAddress)
 
       if (this.provider) {
-        const safeOwner = await this.provider.getSigner(0)
         let finalValue = value
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
-
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
-
-        const safeSDK = await Safe.create({
-          ethAdapter: this.etherAdapter,
-          safeAddress: this.safeAddress,
-        })
+        const safeService = this.getApiKit()
+        const safeSDK = await this.getProtocolKit(this.safeAddress)
 
         const nonce = await safeService.getNextNonce(this.safeAddress)
 
@@ -153,14 +121,14 @@ export class Gnosis {
 
         if (tokenAddress) {
           const decimals = await getDecimalsForToken(this.chainId, tokenAddress)
-          finalValue = ethers.utils.parseUnits(value, decimals!).toString()
+          finalValue = ethers.parseUnits(value, decimals!).toString()
         } else {
-          finalValue = ethers.utils.parseEther(value).toString()
+          finalValue = ethers.parseEther(value).toString()
         }
 
         if (tokenAddress) {
           encodedCallData = encodeData(
-            ethers.utils.getAddress(receiverAddress),
+            ethers.getAddress(receiverAddress),
             finalValue
           )
         }
@@ -169,34 +137,34 @@ export class Gnosis {
 
         const tokenValue = tokenAddress ? '0' : finalValue
 
-        const safeTransactionData: SafeTransactionDataPartial = {
-          to: ethers.utils.getAddress(to),
+        const txData: MetaTransactionData = {
+          to: ethers.getAddress(to),
           data: encodedCallData,
           value: tokenValue,
           operation: 0,
-          nonce: nonce,
         }
 
         const safeTransaction = await safeSDK.createTransaction({
-          safeTransactionData,
+          transactions: [txData],
+          options: { nonce: Number(nonce) },
         })
 
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
-        const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
+        const senderSignature = await safeSDK.signHash(safeTxHash)
 
-        const result = await safeService.proposeTransaction({
+        await safeService.proposeTransaction({
           safeAddress: this.safeAddress,
           safeTransactionData: safeTransaction.data,
           safeTxHash,
-          senderAddress: ethers.utils.getAddress(senderAddress),
+          senderAddress: ethers.getAddress(senderAddress),
           senderSignature: senderSignature.data,
           origin: 'Samudai Platform',
         })
 
         const data: SafeTransactionResponse = {
           safeTxHash: safeTxHash,
-          proposedSafeTx: result,
+          proposedSafeTx: undefined,
         }
 
         return data
@@ -214,94 +182,63 @@ export class Gnosis {
     senderAddress: string
   ): Promise<SafeTransactionResponse> => {
     try {
-      this.safeAddress = ethers.utils.getAddress(safeAddress)
+      this.safeAddress = ethers.getAddress(safeAddress)
 
       if (this.provider) {
-        const safeOwner = await this.provider.getSigner(0)
-
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
-
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
-
-        const safeSDK = await Safe.create({
-          ethAdapter: this.etherAdapter,
-          safeAddress: this.safeAddress,
-        })
+        const safeService = this.getApiKit()
+        const safeSDK = await this.getProtocolKit(this.safeAddress)
 
         const nonce = await safeService.getNextNonce(this.safeAddress)
 
         const options: SafeTransactionOptionalProps = {
-          nonce: nonce,
+          nonce: Number(nonce),
         }
-        const safeTransactionData: SafeTransactionDataPartial[] = []
+        const safeTransactionData: MetaTransactionData[] = []
         await Promise.all(
           transactions.map(async (tx: any) => {
             if (tx?.tokenAddress === '') {
-              const safeTransactionDataItem: SafeTransactionDataPartial = {
-                to: '',
-                data: '',
-                value: '',
-              }
-              safeTransactionDataItem.to = ethers.utils.getAddress(tx.to)
-              safeTransactionDataItem.data = '0x'
-              safeTransactionDataItem.value = ethers.utils
-                .parseEther(tx.value)
-                .toString()
-              safeTransactionData.push(safeTransactionDataItem)
+              safeTransactionData.push({
+                to: ethers.getAddress(tx.to),
+                data: '0x',
+                value: ethers.parseEther(tx.value).toString(),
+              })
             } else {
-              const safeTransactionDataItem: SafeTransactionDataPartial = {
-                to: '',
-                data: '',
-                value: '',
-              }
               const decimals = await getDecimalsForToken(
                 this.chainId,
                 tx?.tokenAddress
               )
-              const val = ethers.utils
-                .parseUnits(tx.value, decimals!)
-                .toString()
-              safeTransactionDataItem.value = '0'
-              const encodedCallData = encodeData(
-                ethers.utils.getAddress(tx.to),
-                val
-              )
-              safeTransactionDataItem.to = ethers.utils.getAddress(
-                tx?.tokenAddress
-              )
-              safeTransactionDataItem.data = encodedCallData
-              safeTransactionData.push(safeTransactionDataItem)
+              const val = ethers.parseUnits(tx.value, decimals!).toString()
+              const encodedCallData = encodeData(ethers.getAddress(tx.to), val)
+              safeTransactionData.push({
+                to: ethers.getAddress(tx?.tokenAddress),
+                data: encodedCallData,
+                value: '0',
+              })
             }
           })
         )
         const safeTransaction = await safeSDK.createTransaction({
-          safeTransactionData: safeTransactionData,
+          transactions: safeTransactionData,
           onlyCalls: true,
           options,
         })
 
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
-        const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
+        const senderSignature = await safeSDK.signHash(safeTxHash)
 
-        const result = await safeService.proposeTransaction({
+        await safeService.proposeTransaction({
           safeAddress: this.safeAddress,
           safeTransactionData: safeTransaction.data,
           safeTxHash,
-          senderAddress: ethers.utils.getAddress(senderAddress),
+          senderAddress: ethers.getAddress(senderAddress),
           senderSignature: senderSignature.data,
           origin: 'Samudai Platform',
         })
 
         const data: SafeTransactionResponse = {
           safeTxHash: safeTxHash,
-          proposedSafeTx: result,
+          proposedSafeTx: undefined,
         }
 
         return data
@@ -318,21 +255,11 @@ export class Gnosis {
   ): Promise<SafeMultisigTransactionListResponse> => {
     try {
       if (this.provider) {
-        const safeOwner = await this.provider.getSigner(0)
-
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
-
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
+        const safeService = this.getApiKit()
 
         const pendingTxs: SafeMultisigTransactionListResponse =
           await safeService.getPendingTransactions(
-            ethers.utils.getAddress(safeAddress)
+            ethers.getAddress(safeAddress)
           )
 
         return pendingTxs
@@ -380,17 +307,7 @@ export class Gnosis {
   ): Promise<TransactionDetails> => {
     try {
       if (this.provider) {
-        const safeOwner = await this.provider.getSigner(0)
-
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
-
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
+        const safeService = this.getApiKit()
 
         const tx: SafeMultisigTransactionResponse =
           await safeService.getTransaction(safeTxHash)
@@ -415,21 +332,12 @@ export class Gnosis {
     try {
       if (this.provider) {
         let isOwner = false
-        const safeOwner = await this.provider.getSigner(0)
+        const safeOwner = await this.provider.getSigner()
         const userAddress = await safeOwner.getAddress()
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
+        const safeService = this.getApiKit()
 
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
-
-        const safeInfo: SafeInfoResponse = await safeService.getSafeInfo(
-          safeAddress
-        )
+        const safeInfo: SafeInfoResponse =
+          await safeService.getSafeInfo(safeAddress)
 
         safeInfo.owners.find((owner) => {
           if (owner === userAddress) {
@@ -457,27 +365,18 @@ export class Gnosis {
         let isOwner = false
         let isExecutable = false
         let isConfirmation = false
-        const safeOwner = await this.provider.getSigner(0)
+        const safeOwner = await this.provider.getSigner()
         const userAddress = await safeOwner.getAddress()
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
-
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
+        const safeService = this.getApiKit()
 
         const transaction: SafeMultisigTransactionResponse =
           await safeService.getTransaction(safeTxHash)
 
-        const safeInfo: SafeInfoResponse = await safeService.getSafeInfo(
-          safeAddress
-        )
+        const safeInfo: SafeInfoResponse =
+          await safeService.getSafeInfo(safeAddress)
 
         const isSafeOwner = safeInfo.owners.find(
-          (owner) => owner === ethers.utils.getAddress(userAddress)
+          (owner) => owner === ethers.getAddress(userAddress)
         )
 
         if (isSafeOwner) {
@@ -489,7 +388,7 @@ export class Gnosis {
         if (isOwner) {
           const confirmation = transaction.confirmations!.find(
             (confirmation) =>
-              confirmation.owner === ethers.utils.getAddress(userAddress)
+              confirmation.owner === ethers.getAddress(userAddress)
           )
           if (confirmation) {
             isConfirmation = false
@@ -528,27 +427,12 @@ export class Gnosis {
   ): Promise<SignatureResponse> => {
     try {
       if (this.provider) {
-        this.safeAddress = ethers.utils.getAddress(safeAddress)
+        this.safeAddress = ethers.getAddress(safeAddress)
 
-        const safeOwner = await this.provider.getSigner(0)
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
+        const safeService = this.getApiKit()
+        const safeSDK = await this.getProtocolKit(this.safeAddress)
 
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
-
-        const safeSDK = await Safe.create({
-          ethAdapter: this.etherAdapter,
-          safeAddress: this.safeAddress,
-        })
-
-        const signature: SafeSignature = await safeSDK.signTransactionHash(
-          safeTxHash
-        )
+        const signature: SafeSignature = await safeSDK.signHash(safeTxHash)
         const result: SignatureResponse = await safeService.confirmTransaction(
           safeTxHash,
           signature.data
@@ -569,39 +453,26 @@ export class Gnosis {
   ): Promise<SafeTransactionResponse> => {
     try {
       if (this.provider) {
-        this.safeAddress = ethers.utils.getAddress(safeAddress)
-        const safeOwner = await this.provider.getSigner(0)
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
-
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
-
-        const safeSDK = await Safe.create({
-          ethAdapter: this.etherAdapter,
-          safeAddress: this.safeAddress,
-        })
+        this.safeAddress = ethers.getAddress(safeAddress)
+        const safeService = this.getApiKit()
+        const safeSDK = await this.getProtocolKit(this.safeAddress)
 
         const safeTransaction = await safeSDK.createRejectionTransaction(nonce)
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
-        const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
+        const senderSignature = await safeSDK.signHash(safeTxHash)
 
-        const result = await safeService.proposeTransaction({
+        await safeService.proposeTransaction({
           safeAddress: this.safeAddress,
           safeTransactionData: safeTransaction.data,
           safeTxHash,
-          senderAddress: ethers.utils.getAddress(senderAddress),
+          senderAddress: ethers.getAddress(senderAddress),
           senderSignature: senderSignature.data,
           origin: 'Samudai Platform',
         })
         const data: SafeTransactionResponse = {
           safeTxHash: safeTxHash,
-          proposedSafeTx: result,
+          proposedSafeTx: undefined,
         }
 
         return data
@@ -618,59 +489,49 @@ export class Gnosis {
   ): Promise<any> => {
     try {
       if (this.provider) {
-        this.safeAddress = ethers.utils.getAddress(safeAddress)
+        this.safeAddress = ethers.getAddress(safeAddress)
 
-        const safeOwner = await this.provider.getSigner(0)
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
-
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
-
-        const safeSDK = await Safe.create({
-          ethAdapter: this.etherAdapter,
-          safeAddress: this.safeAddress,
-        })
+        const safeService = this.getApiKit()
+        const safeSDK = await this.getProtocolKit(this.safeAddress)
 
         const transaction: SafeMultisigTransactionResponse =
           await safeService.getTransaction(safeTxHash)
 
-        const safeTransactionData: SafeTransactionData = {
+        const txData: MetaTransactionData = {
           to: transaction.to,
           value: transaction.value,
           data: transaction.data || '0x',
           operation: transaction.operation,
+        }
+
+        const options: SafeTransactionOptionalProps = {
           safeTxGas: transaction.safeTxGas.toString(),
           baseGas: transaction.baseGas.toString(),
           gasPrice: parseInt(transaction.gasPrice).toString(),
           gasToken: transaction.gasToken,
           refundReceiver: transaction.refundReceiver!,
-          nonce: transaction.nonce,
+          nonce: Number(transaction.nonce),
         }
 
         const safeTransaction = await safeSDK.createTransaction({
-          safeTransactionData,
+          transactions: [txData],
+          options,
         })
 
         transaction.confirmations!.forEach((confirmation) => {
-          const signature = new EthSignSignature(
+          const signature = new EthSafeSignature(
             confirmation.owner,
             confirmation.signature
           )
           safeTransaction.addSignature(signature)
         })
 
-        const executeTxResponse = await safeSDK.executeTransaction(
-          safeTransaction
-        )
+        const executeTxResponse =
+          await safeSDK.executeTransaction(safeTransaction)
 
         const receipt =
           executeTxResponse.transactionResponse &&
-          (await executeTxResponse.transactionResponse.wait())
+          (await (executeTxResponse.transactionResponse as any).wait())
 
         return receipt
       } else {
@@ -774,25 +635,11 @@ export class Gnosis {
     customERC20Token: CustomERC20Token[]
   ): Promise<SafeTransactionResponse> => {
     try {
-      this.safeAddress = ethers.utils.getAddress(safeAddress)
+      this.safeAddress = ethers.getAddress(safeAddress)
 
       if (this.provider) {
-        const safeOwner = await this.provider.getSigner(0)
-
-        this.etherAdapter = new EthersAdapter({
-          ethers: ethers,
-          signerOrProvider: safeOwner,
-        })
-
-        const safeService = new SafeApiKit({
-          txServiceUrl: this.txServiceUrl,
-          ethAdapter: this.etherAdapter,
-        })
-
-        const safeSDK = await Safe.create({
-          ethAdapter: this.etherAdapter,
-          safeAddress: this.safeAddress,
-        })
+        const safeService = this.getApiKit()
+        const safeSDK = await this.getProtocolKit(this.safeAddress)
 
         const nonce = await safeService.getNextNonce(this.safeAddress)
 
@@ -800,30 +647,30 @@ export class Gnosis {
           this.generateCustomERC20Transaction(receiverAddress, customERC20Token)
 
         const options: SafeTransactionOptionalProps = {
-          nonce, // Optional
+          nonce: Number(nonce), // Optional
         }
 
         const safeTransaction = await safeSDK.createTransaction({
-          safeTransactionData,
+          transactions: safeTransactionData,
           options,
         })
 
         const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
 
-        const senderSignature = await safeSDK.signTransactionHash(safeTxHash)
+        const senderSignature = await safeSDK.signHash(safeTxHash)
 
-        const result = await safeService.proposeTransaction({
+        await safeService.proposeTransaction({
           safeAddress: this.safeAddress,
           safeTransactionData: safeTransaction.data,
           safeTxHash,
-          senderAddress: ethers.utils.getAddress(senderAddress),
+          senderAddress: ethers.getAddress(senderAddress),
           senderSignature: senderSignature.data,
           origin: 'Samudai Platform',
         })
 
         const data: SafeTransactionResponse = {
           safeTxHash: safeTxHash,
-          proposedSafeTx: result,
+          proposedSafeTx: undefined,
         }
 
         return data

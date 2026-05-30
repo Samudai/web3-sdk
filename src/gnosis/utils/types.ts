@@ -1,19 +1,36 @@
-import { Web3Provider } from '@ethersproject/providers'
-import { SafeMultisigTransactionResponse } from '@safe-global/safe-core-sdk-types'
-export {
+import { BrowserProvider } from 'ethers'
+import { SafeMultisigTransactionResponse } from '@safe-global/types-kit'
+export type {
   MetaTransactionData,
   SafeSignature,
   SafeTransactionData,
   SafeTransactionDataPartial,
-} from '@gnosis.pm/safe-core-sdk-types'
+  SafeMultisigTransactionResponse,
+} from '@safe-global/types-kit'
 
-export {
-  SafeBalanceUsdResponse,
+export type {
   SafeInfoResponse,
   SafeMultisigTransactionListResponse,
-  SafeMultisigTransactionResponse,
   SignatureResponse,
-} from '@gnosis.pm/safe-service-client'
+} from '@safe-global/api-kit'
+
+/**
+ * Shape of the deprecated Safe Transaction Service `/balances/usd/` endpoint.
+ * `@safe-global/api-kit` no longer ships this type, so it is defined locally.
+ */
+export type SafeBalanceUsdResponse = {
+  tokenAddress: string
+  token: {
+    name: string
+    symbol: string
+    decimals: number
+    logoUri: string
+  } | null
+  balance: string
+  fiatBalance: string
+  fiatConversion: string
+  fiatCode: string
+}
 
 export enum ProviderType {
   'WALLET' = 'WALLET',
@@ -22,7 +39,7 @@ export enum ProviderType {
 
 export type GnosisTx = {
   safeAddress: string
-  provider: Web3Provider
+  provider: BrowserProvider
   chainId: number
   receiver: string
   valueInWei: string

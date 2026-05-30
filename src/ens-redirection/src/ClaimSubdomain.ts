@@ -13,64 +13,35 @@ import { ImplementationContractABI } from '../contracts/Contract_ABI'
 const namehash = require('@ensdomains/eth-ens-namehash')
 const contentHash = require('content-hash')
 import { transaction } from '../utils/types'
-import { IBundler, Bundler } from '@biconomy/bundler'
-import {
-  BiconomySmartAccountV2,
-  DEFAULT_ENTRYPOINT_ADDRESS,
-} from '@biconomy/account'
-import { ChainId } from '@biconomy/core-types'
-import {
-  IPaymaster,
-  BiconomyPaymaster,
-  IHybridPaymaster,
-  PaymasterMode,
-  SponsorUserOperationDto,
-} from '@biconomy/paymaster'
-import {
-  ECDSAOwnershipValidationModule,
-  DEFAULT_ECDSA_OWNERSHIP_MODULE,
-} from '@biconomy/modules'
+import { createSmartAccountClient, PaymasterMode } from '@biconomy/account'
 
 export class ClaimSubdomain {
   private cid = ''
-  private provider: ethers.providers.JsonRpcProvider
+  private provider: ethers.JsonRpcProvider
   private wallet: ethers.Wallet
   private contractInstance: ethers.Contract
   private parentHash = namehash.hash(ENS_DOMAIN_NAME)
-  private bundler: IBundler
-  private paymaster: IPaymaster
 
   constructor() {
-    this.provider = new ethers.providers.JsonRpcProvider(MAINNET.RPC_URL)
+    this.provider = new ethers.JsonRpcProvider(MAINNET.RPC_URL)
     this.wallet = new ethers.Wallet(PVT_KEY, this.provider)
     this.contractInstance = new ethers.Contract(
       MAINNET.PROXY_CONTRACT_ADDRESS,
       ImplementationContractABI,
       this.wallet
     )
-    this.bundler = new Bundler({
-      bundlerUrl: MAINNET.BUNDLER_URL,
-      chainId: ChainId.MAINNET,
-      entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
-    })
-    this.paymaster = new BiconomyPaymaster({
-      paymasterUrl: MAINNET.PAYMASTER_URL,
-    })
   }
 
   createSmartAccount = async () => {
     try {
-      const module = await ECDSAOwnershipValidationModule.create({
+      // Biconomy v4: the split Bundler/Paymaster/ECDSA-module packages are
+      // consolidated into a single client. ECDSA validation is the default
+      // module, so it no longer needs to be created explicitly.
+      const biconomySmartAccount = await createSmartAccountClient({
         signer: this.wallet,
-        moduleAddress: DEFAULT_ECDSA_OWNERSHIP_MODULE,
-      })
-      const biconomySmartAccount = await BiconomySmartAccountV2.create({
-        chainId: ChainId.MAINNET,
-        bundler: this.bundler,
-        paymaster: this.paymaster,
-        entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
-        defaultValidationModule: module,
-        activeValidationModule: module,
+        bundlerUrl: MAINNET.BUNDLER_URL,
+        paymasterUrl: MAINNET.PAYMASTER_URL,
+        chainId: 1,
       })
       console.log('address: ', await biconomySmartAccount.getAccountAddress())
       return biconomySmartAccount
@@ -91,7 +62,7 @@ export class ClaimSubdomain {
     try {
       const subdomainName = subname + '.' + ENS_DOMAIN_NAME
       const subdomainHash = namehash.hash(subdomainName)
-      const tx = await this.contractInstance.getData(subdomainHash)
+      const tx = await (this.contractInstance as any).getData(subdomainHash)
       if (tx[0] === '0x0000000000000000000000000000000000000000') {
         return true
       } else {
@@ -116,37 +87,25 @@ export class ClaimSubdomain {
           CANNOT_UNWRAP |
           CANNOT_SET_RESOLVER |
           CAN_EXTEND_EXPIRY
-        const minTx =
-          await this.contractInstance.populateTransaction.createSubdomainWithContentHashV2(
-            this.parentHash,
-            subname,
-            cidHash,
-            fuses,
-            MAINNET.RESOLVER,
-            ownerAddress
-          )
+        const minTx = await (
+          this.contractInstance as any
+        ).createSubdomainWithContentHashV2.populateTransaction(
+          this.parentHash,
+          subname,
+          cidHash,
+          fuses,
+          MAINNET.RESOLVER,
+          ownerAddress
+        )
         const tx = {
           to: MAINNET.PROXY_CONTRACT_ADDRESS,
           data: minTx.data,
         }
-        const userOp = await smartAccount.buildUserOp([tx])
-        const biconomyPaymaster =
-          smartAccount.paymaster as IHybridPaymaster<SponsorUserOperationDto>
-        const paymasterServiceData: SponsorUserOperationDto = {
-          mode: PaymasterMode.SPONSORED,
-          smartAccountInfo: {
-            name: 'BICONOMY',
-            version: '2.0.0',
-          },
-        }
-        const paymasterAndDataResponse =
-          await biconomyPaymaster.getPaymasterAndData(
-            userOp,
-            paymasterServiceData
-          )
-        userOp.paymasterAndData = paymasterAndDataResponse.paymasterAndData
-        const userOpResponse = await smartAccount.sendUserOp(userOp)
-        const { receipt } = await userOpResponse.wait(1)
+        // Biconomy v4: build + sponsor + send is a single call.
+        const userOpResponse = await smartAccount.sendTransaction(tx, {
+          paymasterServiceData: { mode: PaymasterMode.SPONSORED },
+        })
+        const { receipt } = await userOpResponse.wait()
         return {
           transactionHash: receipt.transactionHash,
           success: true,

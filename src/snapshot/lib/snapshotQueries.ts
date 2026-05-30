@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 const axios = require('axios')
 
 export class SnapshotQueries {

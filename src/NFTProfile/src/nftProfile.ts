@@ -1,30 +1,32 @@
 import {
   Alchemy,
-  AlchemyConfig,
-  getNftsForOwner,
-  initializeAlchemy,
+  AlchemySettings,
+  Network,
   OwnedNftsResponse,
-} from '@alch/alchemy-sdk'
+} from 'alchemy-sdk'
 import { ErrorResponse } from '../utils/types'
 import { NFTNetworks } from '../utils/network'
 export class NFTProfile {
   private alchemy: Alchemy
-  private config: AlchemyConfig
+  private config: AlchemySettings
 
   constructor(chainId: number) {
     const network = NFTNetworks.find((network) => network.chainId === chainId)
     if (!network) {
       throw new Error('Invalid chainId')
     }
-    this.config = network.config
-    this.alchemy = initializeAlchemy(this.config)
+    this.config = {
+      ...network.config,
+      network: network.config.network as Network,
+    }
+    this.alchemy = new Alchemy(this.config)
   }
 
   getNFTProfilePPs = async (
     userAddress: string
   ): Promise<OwnedNftsResponse> => {
     try {
-      const res = await getNftsForOwner(this.alchemy, userAddress)
+      const res = await this.alchemy.nft.getNftsForOwner(userAddress)
       return res
     } catch (err: any) {
       throw err

@@ -1,4 +1,4 @@
-import { Network } from '@alch/alchemy-sdk'
+import { Network } from 'alchemy-sdk'
 
 export const Networks = [
   {
@@ -11,11 +11,11 @@ export const Networks = [
     },
   },
   {
-    name: 'rinkeby',
-    chainId: 4,
+    name: 'sepolia',
+    chainId: 11155111,
     config: {
       apiKey: '93abA8Tod5wqSRnXxJvYnD3_gAyMSBX3', // Replace with your Alchemy API Key.
-      network: Network.ETH_RINKEBY, // Replace with your network.
+      network: Network.ETH_SEPOLIA, // Replace with your network.
       maxRetries: 10,
     },
   },

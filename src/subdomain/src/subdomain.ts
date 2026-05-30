@@ -1,8 +1,5 @@
-import { ethers } from 'ethers'
-import { TransactionResponse, Web3Provider } from '@ethersproject/providers'
+import { ethers, BrowserProvider, TransactionResponse } from 'ethers'
 import ContractABI from '../contracts/abi.json'
-import { ErrorResponse } from '../utils/types'
-import axios from 'axios'
 import { GatewayURL } from '../utils/constants'
 
 export class Subdomain {
@@ -17,7 +14,7 @@ export class Subdomain {
 
   claimSubdomain = async (
     username: string,
-    provider: Web3Provider
+    provider: BrowserProvider
     // member_id: string,
     // jwt: string
   ): Promise<boolean> => {
@@ -34,7 +31,7 @@ export class Subdomain {
       // const memberCount = memberCountResult.data.data.count
 
       if (provider && this.contractAddress) {
-        const signer = provider.getSigner()
+        const signer = await provider.getSigner()
         const address = await signer.getAddress()
         const contract = new ethers.Contract(
           this.contractAddress,
@@ -47,11 +44,9 @@ export class Subdomain {
           timestamp: Date.now(),
           message: 'I am claiming this subdomain',
         })
-        const encoded = ethers.utils.solidityKeccak256(['string'], [message])
+        const encoded = ethers.solidityPackedKeccak256(['string'], [message])
 
-        const signature = await signer.signMessage(
-          ethers.utils.arrayify(encoded)
-        )
+        const signature = await signer.signMessage(ethers.getBytes(encoded))
 
         const tx: TransactionResponse = await contract.claimSubdomain(
           username,
