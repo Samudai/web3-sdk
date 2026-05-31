@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-const axios = require('axios')
+import axios from 'axios'
 
 export class SnapshotQueries {
   private url = 'https://hub.snapshot.org/graphql'

@@ -1,9 +1,13 @@
 import axios from 'axios'
 import { Message, User, APIResult } from '../utils/types'
-import { Provider, Web3Provider } from '@ethersproject/providers'
-import { formatBytes32String } from '@ethersproject/strings'
-import { BigNumber } from '@ethersproject/bignumber'
-import { utils } from 'ethers'
+import {
+  Provider,
+  BrowserProvider,
+  toUtf8Bytes,
+  getAddress,
+  encodeBytes32String,
+  toBigInt,
+} from 'ethers'
 
 import {
   IdRegistry,
@@ -26,7 +30,7 @@ export class Farcaster {
   //   }
 
   private validateUsername = (username: string): void => {
-    const unameBytes = utils.toUtf8Bytes(username)
+    const unameBytes = toUtf8Bytes(username)
     if (unameBytes.length > 16) {
       throw new Error('username cannot be greater than 16 characters')
     }
@@ -85,8 +89,8 @@ export class Farcaster {
 
   private usernameToTokenId = (username: string) => {
     this.validateUsername(username)
-    const unameBytes = formatBytes32String(username)
-    return BigNumber.from(unameBytes)
+    const unameBytes = encodeBytes32String(username)
+    return toBigInt(unameBytes)
   }
 
   private getAddressForUsername = async (
@@ -103,15 +107,15 @@ export class Farcaster {
       ).ownerOf(this.usernameToTokenId(username))
 
       return ownrAddress
-    } catch (err) {
+    } catch {
       return undefined
     }
   }
 
   private getFarcasterID = async (
     address: string,
-    web3Provider: Web3Provider
-  ): Promise<BigNumber> => {
+    web3Provider: BrowserProvider
+  ): Promise<bigint> => {
     const idRegistryValue = (async (): Promise<IdRegistry> => {
       const contractAddress: string = GOERLI_ADDRESS.idRegistry
       return IdRegistry__factory.connect(contractAddress, web3Provider)
@@ -122,7 +126,7 @@ export class Farcaster {
 
   private lookupByAddress = async (
     address: string,
-    web3Provider: Web3Provider
+    web3Provider: BrowserProvider
   ): Promise<User | undefined> => {
     const response = await axios.get(`${this.API_URL}/profiles/${address}`)
 
@@ -146,19 +150,19 @@ export class Farcaster {
         typeof userOrAddress === 'string'
           ? userOrAddress
           : userOrAddress.address
-      utils.getAddress(address)
+      getAddress(address)
       const response = await axios.get<APIResult<Message[]>>(
         `${this.API_URL}/profiles/${address}/casts`
       )
       return response.data.result
-    } catch (err) {
+    } catch {
       return []
     }
   }
 
   lookupByUsername = async (
     username: string,
-    web3Provider: Web3Provider
+    web3Provider: BrowserProvider
   ): Promise<User | undefined> => {
     try {
       const ownrAddr = await this.getAddressForUsername(web3Provider, username)
@@ -167,7 +171,7 @@ export class Farcaster {
       } else {
         return undefined
       }
-    } catch (err) {
+    } catch {
       return undefined
     }
   }

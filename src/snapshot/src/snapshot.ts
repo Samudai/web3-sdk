@@ -1,6 +1,5 @@
-import { Web3Provider } from '@ethersproject/providers'
+import { BrowserProvider } from 'ethers'
 import snapshot from '@snapshot-labs/snapshot.js'
-import { ProposalType } from '@snapshot-labs/snapshot.js/dist/sign/types'
 import { SnapshotQueries } from '../lib/snapshotQueries'
 
 export class Snapshot {
@@ -49,7 +48,7 @@ export class Snapshot {
           [key: string]: number
         },
     account: any,
-    provider: Web3Provider,
+    provider: BrowserProvider,
     reason?: string
   ): Promise<any> => {
     try {
@@ -62,7 +61,9 @@ export class Snapshot {
         const proposal: string = proposalId
         const type = result.type
 
-        const voteReceipt = await client.vote(provider, account, {
+        // snapshot.js bundles its own ethers v5 internally; cast the v6
+        // provider to satisfy its Web3Provider parameter type.
+        const voteReceipt = await client.vote(provider as any, account, {
           space: space,
           proposal: proposal,
           choice: choice,

@@ -1,11 +1,11 @@
-import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers'
+import { JsonRpcSigner, BrowserProvider } from 'ethers'
 import { SiweMessage, generateNonce } from 'siwe'
 import { SiweResponse } from '../utils/types'
 
 export class Siwe {
-  private provider: Web3Provider
+  private provider: BrowserProvider
 
-  constructor(provider: Web3Provider) {
+  constructor(provider: BrowserProvider) {
     this.provider = provider
   }
 
@@ -22,7 +22,7 @@ export class Siwe {
         domain: domain,
         address: address,
         uri: origin,
-        version: '1.0.0',
+        version: '1',
         chainId: 1,
         statement: statement,
         nonce: nonce,
@@ -37,7 +37,7 @@ export class Siwe {
 
   walletSignIn = async (domain: string): Promise<SiweResponse> => {
     try {
-      const signer: JsonRpcSigner = this.provider.getSigner()
+      const signer: JsonRpcSigner = await this.provider.getSigner()
       const address: string = await signer.getAddress()
       const message: string = await this.createMessage(
         address,

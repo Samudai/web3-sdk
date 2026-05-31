@@ -1,8 +1,12 @@
 const path = require('path')
+const webpack = require('webpack')
 
 module.exports = {
   mode: 'production',
   entry: './src/index.ts',
+  experiments: {
+    asyncWebAssembly: true,
+  },
   output: {
     path: path.resolve(__dirname, '../dist/umd'),
     filename: 'index.js',
@@ -24,6 +28,11 @@ module.exports = {
       },
     ],
   },
+  plugins: [
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    }),
+  ],
   resolve: {
     extensions: ['.ts', '.js', '.tsx', '.jsx'],
     fallback: {
@@ -34,9 +43,11 @@ module.exports = {
       zlib: false,
       http: false,
       https: false,
-      stream: false,
       crypto: false,
-      'crypto-browserify': require.resolve('crypto-browserify'), //if you want to use this module also don't forget npm i crypto-browserify
+      process: false,
+      'crypto-browserify': require.resolve('crypto-browserify'),
+      buffer: require.resolve('buffer/'),
+      stream: require.resolve('stream-browserify'),
     },
   },
 }

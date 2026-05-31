@@ -1,5 +1,3 @@
-import { BigNumber } from '@ethersproject/bignumber'
-
 /**
  * Generic response type returned by requests to api.farcaster.xyz
  */
@@ -24,7 +22,7 @@ export interface User {
    * The permanent ID associated with a user
    * (as opposed to usernames, which can be transferred and changed)
    */
-  farcasterId: BigNumber
+  farcasterId: bigint
   /** Details for the user's avatar */
   avatar: {
     url: string

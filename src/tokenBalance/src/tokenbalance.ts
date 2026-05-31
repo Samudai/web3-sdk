@@ -1,10 +1,5 @@
 /* eslint-disable prefer-const */
-import {
-  Alchemy,
-  AlchemyConfig,
-  TokenBalance,
-  TokenMetadataResponse,
-} from 'alchemy-sdk'
+import { Alchemy, TokenBalance, TokenMetadataResponse } from 'alchemy-sdk'
 
 import { Networks } from '../utils/networks'
 
