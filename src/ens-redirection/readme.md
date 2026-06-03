@@ -16,7 +16,7 @@ This feature aims to create ENS subdomains for anyone on the platform and have t
 
 - After a contract is upgraded/created or a new smart account is created you need to head over to NameWrapper's contract and head over to **setApprovalForAll** to approve the appropriate as the operator for your name and pass true (\* This should only be done by the owner of the name.)
 
-- The **@samudai_xyz/web3-sdk** has a class **ClaimSubdomain** which has a function **claimSubdomain(subname:string)** which can be called to create a subname for the name **samudai.eth**.
+- The **@samudai/web3-sdk** has a class **ClaimSubdomain** which has a function **claimSubdomain(subname:string)** which can be called to create a subname for the name **samudai.eth**.
 
 - To make the transaction **gasless** we have integrated **Biconomy SDK** with Account Abstraction.
 
