@@ -27,7 +27,8 @@
     "addscope": "node tools/packagejson name @tomchen/example-typescript-package"
   },
   "publishConfig": {
-    "access": "restricted"
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
   },
   "files": [
     "dist"
